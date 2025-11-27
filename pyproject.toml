@@ -10,9 +10,6 @@ description = ''
 readme = "README.md"
 requires-python = ">=3.8"
 dependencies = ["libcst>=1.1.0 ; python_version == '3.8'", "libcst>=1.8.6 ; python_version > '3.8'"]
-
-"some-package>=1.0 ; python_version < '3.9'"
-
 classifiers = [
     "Operating System :: OS Independent",
     'Operating System :: MacOS :: MacOS X',
