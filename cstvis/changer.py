@@ -26,7 +26,6 @@ class Changer:
         wrapper = metadata.MetadataWrapper(self.module)
         aggregator = CommentsAggregator()
         wrapper.visit(aggregator)
-        print(aggregator.comments)
         return aggregator.comments
 
     def filter(self, function: Callable[[CSTNode, Coordinate, Optional[str], List[str]], bool]) -> Callable[[CSTNode, Coordinate, Optional[str], List[str]], bool]:
