@@ -12,5 +12,5 @@ class CommentsAggregator(CSTVisitor):
     def on_visit(self, node: CSTNode) -> bool:
         if isinstance(node, Comment):
             position = self.get_metadata(metadata.PositionProvider, node)
-            self.comments[position.start.line] = node.value
+            self.comments[position.start.line] = node.value[1:]
         return True
