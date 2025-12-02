@@ -3,6 +3,7 @@ __pycache__
 .DS_Store
 test.py
 test_2.py
+test_3.py
 *.egg-info
 dist
 venv
