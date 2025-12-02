@@ -1,4 +1,4 @@
-from typing import Callable, List, Dict, Optional
+from typing import Callable, List, Dict, Type, Optional
 
 from libcst import CSTNode, CSTVisitor, metadata
 
@@ -10,7 +10,7 @@ class Bloodhound(CSTVisitor):
 
     def __init__(
         self,
-        nodes_mapping: Dict[CSTNode, List[Callable[[CSTNode, Coordinate, Optional[str]], bool]]],
+        nodes_mapping: Dict[Type[CSTNode], List[Callable[[CSTNode, Coordinate, Optional[str]], bool]]],
         comments: Dict[int, str],
     ) -> None:
         self.coordinates: List[Coordinate] = []

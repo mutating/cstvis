@@ -1,8 +1,10 @@
-from typing import List
+from typing import List, Dict, Type, Callable, Optional
 
 import libcst.matchers as matchers_module
-from libcst import Add, Subtract, metadata
+from libcst import Add, Subtract, CSTNode, metadata
 from libcst.matchers import BaseMatcherNode, TypeOf, MatcherDecoratableTransformer, leave
+
+from cstvis.dto import Coordinate
 
 
 def get_all_matcher_nodes() -> List[BaseMatcherNode]:
@@ -28,14 +30,32 @@ def leave_all(function):
 class SuperTransformer(MatcherDecoratableTransformer):
     METADATA_DEPENDENCIES = (metadata.PositionProvider,)
 
+    def __init__(
+        self,
+        target_coordinate: Coordinate,
+        nodes_mapping: Dict[Type[CSTNode], List[Callable[[CSTNode, Coordinate, Optional[str]], bool]]],
+        comments: Dict[int, str],
+    ):
+        self.target_coordinate = target_coordinate
+        self.nodes_mapping = nodes_mapping
+        self.comments = comments
+
+        super().__init__()
+
     @leave_all
     def leave(self, original_node, updated_node):
         position = self.get_metadata(metadata.PositionProvider, original_node)
-        if isinstance(original_node, Add):
-            # Возвращаем новый узел Subtract вместо Add
-            return Subtract(
-                whitespace_before=original_node.whitespace_before,
-                whitespace_after=original_node.whitespace_after,
-            )
+        coordinate = Coordinate(
+            file=None,
+            class_name=original_node.__class__.__name__,
+            start_line=position.start.line,
+            start_column=position.start.column,
+            end_line=position.end.line,
+            end_column=position.end.column,
+        )
+
+        if coordinate == self.target_coordinate and type(original_node) in self.nodes_mapping:
+            for converter in self.nodes_mapping[type(original_node)]:
+                return converter(updated_node, coordinate, self.comments.get(coordinate.start_line))
         else:
             return updated_node
