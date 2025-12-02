@@ -1,66 +1,14 @@
-from multiprocessing import Value
-from typing import Callable, List, Dict, Generator, Union, Optional
-from dataclasses import dataclass
+from typing import Callable, List, Dict, Generator, Optional
 from pathlib import Path
 from collections import defaultdict
 from inspect import signature, _empty
 from functools import cached_property
 
-from libcst import Comment, CSTNode, CSTVisitor, parse_module, metadata
+from libcst import CSTNode, parse_module, metadata
 
-
-@dataclass
-class Coordinate:
-    file: Optional[Path]
-    class_name: str
-    start_line: int
-    start_column: int
-    end_line: int
-    end_column: int
-
-
-class Bloodhound(CSTVisitor):
-    METADATA_DEPENDENCIES = (metadata.PositionProvider,)
-
-    def __init__(
-        self,
-        nodes_mapping: Dict[CSTNode, List[Callable[[CSTNode, Coordinate, Optional[str]], bool]]],
-        comments: Dict[int, str],
-    ) -> None:
-        self.coordinates: List[Coordinate] = []
-        self.nodes_mapping = nodes_mapping
-        self.comments = comments
-
-    def on_visit(self, node: CSTNode) -> bool:
-        if type(node) in self.nodes_mapping:
-            position = self.get_metadata(metadata.PositionProvider, node)
-            print('KEK', self.comments.get(position.start.line), position.start.line)
-
-            self.coordinates.append(
-                Coordinate(
-                    file=None,
-                    class_name=node.__class__.__name__,
-                    start_line=position.start.line,
-                    start_column=position.start.column,
-                    end_line=position.end.line,
-                    end_column=position.end.column,
-                ),
-            )
-
-        return True
-
-
-class CommentsAggregator(CSTVisitor):
-    METADATA_DEPENDENCIES = (metadata.PositionProvider,)
-
-    def __init__(self) -> None:
-        self.comments: Dict[int, str] = {}
-
-    def on_visit(self, node: CSTNode) -> bool:
-        if isinstance(node, Comment):
-            position = self.get_metadata(metadata.PositionProvider, node)
-            self.comments[position.start.line] = node.value
-        return True
+from cstvis.visitors.comments_aggregator import CommentsAggregator
+from cstvis.visitors.bloodhound import Bloodhound
+from cstvis.dto import Coordinate
 
 
 class Changer:
