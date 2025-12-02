@@ -4,8 +4,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from collections import defaultdict
 from inspect import signature, _empty
+from functools import cached_property
 
-from libcst import CSTNode, CSTVisitor, parse_module, metadata
+from libcst import Comment, CSTNode, CSTVisitor, parse_module, metadata
 
 
 @dataclass
@@ -17,21 +18,23 @@ class Coordinate:
     end_line: int
     end_column: int
 
-@dataclass
-class Comment:
-    coordinate: Coordinate
-    text: str
 
 class Bloodhound(CSTVisitor):
     METADATA_DEPENDENCIES = (metadata.PositionProvider,)
 
-    def __init__(self, nodes_mapping: Dict[CSTNode, List[Callable[[CSTNode, Coordinate, Optional[str]], bool]]]) -> None:
+    def __init__(
+        self,
+        nodes_mapping: Dict[CSTNode, List[Callable[[CSTNode, Coordinate, Optional[str]], bool]]],
+        comments: Dict[int, str],
+    ) -> None:
         self.coordinates: List[Coordinate] = []
         self.nodes_mapping = nodes_mapping
+        self.comments = comments
 
     def on_visit(self, node: CSTNode) -> bool:
         if type(node) in self.nodes_mapping:
             position = self.get_metadata(metadata.PositionProvider, node)
+            print('KEK', self.comments.get(position.start.line), position.start.line)
 
             self.coordinates.append(
                 Coordinate(
@@ -47,6 +50,19 @@ class Bloodhound(CSTVisitor):
         return True
 
 
+class CommentsAggregator(CSTVisitor):
+    METADATA_DEPENDENCIES = (metadata.PositionProvider,)
+
+    def __init__(self) -> None:
+        self.comments: Dict[int, str] = {}
+
+    def on_visit(self, node: CSTNode) -> bool:
+        if isinstance(node, Comment):
+            position = self.get_metadata(metadata.PositionProvider, node)
+            self.comments[position.start.line] = node.value
+        return True
+
+
 class Changer:
     def __init__(self, source: str) -> None:
         self.source = source
@@ -56,6 +72,14 @@ class Changer:
         self.converters = []
 
         self.converters_by_types = defaultdict(list)
+
+    @cached_property
+    def comments_by_lines(self) -> Dict[int, str]:
+        wrapper = metadata.MetadataWrapper(self.module)
+        aggregator = CommentsAggregator()
+        wrapper.visit(aggregator)
+        print(aggregator.comments)
+        return aggregator.comments
 
     def filter(self, function: Callable[[CSTNode, Coordinate, Optional[str], List[str]], bool]) -> Callable[[CSTNode, Coordinate, Optional[str], List[str]], bool]:
         self.filters.append(function)
@@ -80,7 +104,7 @@ class Changer:
 
     def iterate_coordinates(self) -> Generator[Coordinate, None, None]:
         wrapper = metadata.MetadataWrapper(self.module)
-        printer = Bloodhound(self.converters_by_types)
+        printer = Bloodhound(self.converters_by_types, self.comments_by_lines)
 
         wrapper.visit(printer)
         yield from printer.coordinates
