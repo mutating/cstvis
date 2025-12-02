@@ -18,7 +18,7 @@ class Bloodhound(CSTVisitor):
         self.comments = comments
 
     def on_visit(self, node: CSTNode) -> bool:
-        if type(node) in self.nodes_mapping:
+        if type(node) in self.nodes_mapping or CSTNode in self.nodes_mapping:
             position = self.get_metadata(metadata.PositionProvider, node)
 
             self.coordinates.append(
