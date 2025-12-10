@@ -1,7 +1,7 @@
 from typing import Optional
 
 import pytest
-from libcst import Add
+from libcst import Add, Subtract
 
 from cstvis import Changer, Coordinate
 
@@ -43,3 +43,32 @@ def test_just_iterate_add_coordinates(file):
     assert coordinates[1].start_column == 6
     assert coordinates[1].start_line == 6
     assert coordinates[1].start_column == 6
+
+
+@pytest.mark.parametrize(
+    ['strings'],
+    [
+        ([
+            'a = 5',
+            'b = 12 * a #lol',
+            'c = 12 + b # kek',
+        ],),
+    ],
+)
+def test_apply_one_change(file):
+    changer = Changer(file)
+
+    @changer.converter
+    def change_add_to_sub(node: Add, coordinate: Coordinate, comment: Optional[str]):
+        return Subtract(
+            whitespace_before=node.whitespace_before,
+            whitespace_after=node.whitespace_after,
+        )
+
+    results = []
+
+    for coordinate in changer.iterate_coordinates():
+        results.append(changer.apply_coordinate(coordinate))
+
+    assert len(results) == 1
+    assert results[0] == file.replace('+', '-')
