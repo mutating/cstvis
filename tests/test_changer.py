@@ -72,3 +72,33 @@ def test_apply_one_change(file):
 
     assert len(results) == 1
     assert results[0] == file.replace('+', '-')
+
+
+@pytest.mark.parametrize(
+    ['strings'],
+    [
+        ([
+            'a = 5 + 6+ 7',
+        ],),
+    ],
+)
+def test_apply_two_changes_at_same_line(file):
+    changer = Changer(file)
+
+    @changer.converter
+    def change_add_to_sub(node: Add, coordinate: Coordinate, comment: Optional[str]):
+        return Subtract(
+            whitespace_before=node.whitespace_before,
+            whitespace_after=node.whitespace_after,
+        )
+
+    results = []
+
+    for coordinate in changer.iterate_coordinates():
+        results.append(changer.apply_coordinate(coordinate))
+
+    assert len(results) == 2
+    assert results == [
+        'a = 5 - 6+ 7',
+        'a = 5 + 6- 7',
+    ]
