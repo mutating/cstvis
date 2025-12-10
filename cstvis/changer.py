@@ -9,7 +9,7 @@ from libcst import CSTNode, parse_module, metadata
 from cstvis.visitors.comments_aggregator import CommentsAggregator
 from cstvis.visitors.bloodhound import Bloodhound
 from cstvis.transformers.super_transformer import SuperTransformer
-from cstvis.dto import Coordinate
+from cstvis.dto import Context, Coordinate
 
 
 class Changer:
@@ -29,15 +29,15 @@ class Changer:
         wrapper.visit(aggregator)
         return aggregator.comments
 
-    def filter(self, function: Callable[[CSTNode, Coordinate, Optional[str], List[str]], bool]) -> Callable[[CSTNode, Coordinate, Optional[str], List[str]], bool]:
+    def filter(self, function: Callable[[CSTNode, Context, List[str]], bool]) -> Callable[[CSTNode, Context, List[str]], bool]:
         self.filters.append(function)
         return function
 
-    def converter(self, function: Callable[[CSTNode, Coordinate, Optional[str]], bool]) -> Callable[[CSTNode, Coordinate, Optional[str]], bool]:
+    def converter(self, function: Callable[[CSTNode, Context], bool]) -> Callable[[CSTNode, Context], bool]:
         converter_signature = signature(function)
         parameters = converter_signature.parameters
 
-        if len(parameters) != 3:
+        if len(parameters) != 2:
             raise ValueError
 
         first_parameter = converter_signature.parameters[list(converter_signature.parameters)[0]]

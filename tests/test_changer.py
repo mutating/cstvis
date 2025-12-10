@@ -3,7 +3,7 @@ from typing import Optional
 import pytest
 from libcst import Add, Subtract
 
-from cstvis import Changer, Coordinate
+from cstvis import Changer, Coordinate, Context
 
 
 @pytest.mark.parametrize(
@@ -23,7 +23,7 @@ def test_just_iterate_add_coordinates(file):
     changer = Changer(file)
 
     @changer.converter
-    def name_changer(node: Add, coordinate: Coordinate, comment: Optional[str]):
+    def name_changer(node: Add, context: Context):
         return True
 
     coordinates = list(changer.iterate_coordinates())
@@ -59,7 +59,7 @@ def test_apply_one_change(file):
     changer = Changer(file)
 
     @changer.converter
-    def change_add_to_sub(node: Add, coordinate: Coordinate, comment: Optional[str]):
+    def change_add_to_sub(node: Add, context: Context):
         return Subtract(
             whitespace_before=node.whitespace_before,
             whitespace_after=node.whitespace_after,
@@ -86,7 +86,7 @@ def test_apply_two_changes_at_same_line(file):
     changer = Changer(file)
 
     @changer.converter
-    def change_add_to_sub(node: Add, coordinate: Coordinate, comment: Optional[str]):
+    def change_add_to_sub(node: Add, context: Context):
         return Subtract(
             whitespace_before=node.whitespace_before,
             whitespace_after=node.whitespace_after,
@@ -116,14 +116,14 @@ def test_to_different_changers_to_same_line(file):
     changer = Changer(file)
 
     @changer.converter
-    def change_add_to_sub(node: Add, coordinate: Coordinate, comment: Optional[str]):
+    def change_add_to_sub(node: Add, context: Context):
         return Subtract(
             whitespace_before=node.whitespace_before,
             whitespace_after=node.whitespace_after,
         )
 
     @changer.converter
-    def change_sub_to_add(node: Subtract, coordinate: Coordinate, comment: Optional[str]):
+    def change_sub_to_add(node: Subtract, context: Context):
         return Add(
             whitespace_before=node.whitespace_before,
             whitespace_after=node.whitespace_after,

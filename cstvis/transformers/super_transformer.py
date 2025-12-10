@@ -4,7 +4,7 @@ import libcst.matchers as matchers_module
 from libcst import Add, Subtract, CSTNode, metadata
 from libcst.matchers import BaseMatcherNode, TypeOf, MatcherDecoratableTransformer, leave
 
-from cstvis.dto import Coordinate
+from cstvis.dto import Coordinate, Context
 
 
 def get_all_matcher_nodes() -> List[BaseMatcherNode]:
@@ -33,7 +33,7 @@ class SuperTransformer(MatcherDecoratableTransformer):
     def __init__(
         self,
         target_coordinate: Coordinate,
-        nodes_mapping: Dict[Type[CSTNode], List[Callable[[CSTNode, Coordinate, Optional[str]], bool]]],
+        nodes_mapping: Dict[Type[CSTNode], List[Callable[[CSTNode, Context], bool]]],
         comments: Dict[int, str],
     ):
         self.target_coordinate = target_coordinate
@@ -56,6 +56,7 @@ class SuperTransformer(MatcherDecoratableTransformer):
 
         if coordinate == self.target_coordinate and type(original_node) in self.nodes_mapping:
             for converter in self.nodes_mapping[type(original_node)]:
-                return converter(updated_node, coordinate, self.comments.get(coordinate.start_line))
+                context = Context(coordinate, self.comments.get(coordinate.start_line))
+                return converter(updated_node, context)
         else:
             return updated_node

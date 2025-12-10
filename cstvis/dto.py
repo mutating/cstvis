@@ -11,3 +11,8 @@ class Coordinate:
     start_column: int
     end_line: int
     end_column: int
+
+@dataclass
+class Context:
+    coordinate: Coordinate
+    comment: Optional[str]
