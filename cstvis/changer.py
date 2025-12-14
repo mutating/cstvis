@@ -34,7 +34,7 @@ class Changer:
         self.filters.append(function)
         return function
 
-    def converter(self, function: Callable[[CSTNode, Context], bool]) -> Callable[[CSTNode, Context], bool]:
+    def converter(self, function: Callable[[CSTNode, Context], CSTNode]) -> Callable[[CSTNode, Context], CSTNode]:
         converter_signature = signature(function)
         parameters = converter_signature.parameters
 

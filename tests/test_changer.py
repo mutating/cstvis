@@ -1,10 +1,10 @@
-from typing import Optional
-
 import pytest
 from libcst import Add, Subtract
 from full_match import match
+from metacode import ParsedComment
 
-from cstvis import Changer, Coordinate, Context
+from cstvis import Changer, Context
+
 
 
 @pytest.mark.parametrize(
@@ -168,3 +168,31 @@ def test_changing_function_with_wrong_number_of_parameters(file):
                 whitespace_before=node.whitespace_before,
                 whitespace_after=node.whitespace_after,
             )
+
+
+@pytest.mark.parametrize(
+    ['strings', 'expected_metacodes'],
+    [
+        (['a = 5 + 6- 7'], []),
+        (['a = 5 + 6- 7#'], []),
+        (['a = 5 + 6- 7# ololo!'], []),
+        (['a = 5 + 6- 7# other_key: action'], []),
+        (['a = 5 + 6- 7# key: action'], [ParsedComment(key='key', command='action', arguments=[])]),
+        (['a = 5 + 6- 7 # key: action'], [ParsedComment(key='key', command='action', arguments=[])]),
+        (['a = 5 + 6- 7 # key: action# ololo!'], [ParsedComment(key='key', command='action', arguments=[])]),
+    ],
+)
+def test_read_metacodes_from_comment(file, expected_metacodes):
+    changer = Changer(file)
+
+    metacodes_containers = []
+
+    @changer.converter
+    def change_add_to_sub(node: Add, context: Context):
+        metacodes_containers.append(context.get_metacodes('key'))
+        return node
+
+    for coordinate in changer.iterate_coordinates():
+        changer.apply_coordinate(coordinate)
+
+    assert metacodes_containers[0] == expected_metacodes
