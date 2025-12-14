@@ -65,7 +65,3 @@ class Changer:
         wrapper = metadata.MetadataWrapper(self.module)
         modified = wrapper.visit(SuperTransformer(coordinate, self.converters_by_types, self.comments_by_lines))
         return modified.code
-
-    def change(self) -> str:
-        # TODO: fill it
-        return self.source
