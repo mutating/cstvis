@@ -1,7 +1,7 @@
 from typing import Any
 
 import pytest
-from libcst import Add, Subtract
+from libcst import Add, Subtract, CSTNode
 from full_match import match
 from metacode import ParsedComment
 
@@ -288,3 +288,187 @@ def test_filter_any_off(file):
         results.append(changer.apply_coordinate(coordinate))
 
     assert len(results) == 0
+
+
+@pytest.mark.parametrize(
+    ['strings'],
+    [
+        ([
+            'a = 5 + 6- 7',
+        ],),
+    ],
+)
+def test_filter_cstnode_on(file):
+    changer = Changer(file)
+
+    @changer.converter
+    def change_something(node: Add, context: Context):
+        return Subtract(
+            whitespace_before=node.whitespace_before,
+            whitespace_after=node.whitespace_after,
+        )
+
+    @changer.filter
+    def filter_something(node: CSTNode, context: Context) -> bool:
+        return True
+
+    results = []
+
+    for coordinate in changer.iterate_coordinates():
+        results.append(changer.apply_coordinate(coordinate))
+
+    assert len(results) == 1
+    assert results[0] == file.replace('+', '-')
+
+
+@pytest.mark.parametrize(
+    ['strings'],
+    [
+        ([
+            'a = 5 + 6- 7',
+        ],),
+    ],
+)
+def test_filter_cstnode_off(file):
+    changer = Changer(file)
+
+    @changer.converter
+    def change_something(node: Add, context: Context):
+        return Subtract(
+            whitespace_before=node.whitespace_before,
+            whitespace_after=node.whitespace_after,
+        )
+
+    @changer.filter
+    def filter_something(node: CSTNode, context: Context) -> bool:
+        return False
+
+    results = []
+
+    for coordinate in changer.iterate_coordinates():
+        results.append(changer.apply_coordinate(coordinate))
+
+    assert len(results) == 0
+
+
+@pytest.mark.parametrize(
+    ['strings'],
+    [
+        ([
+            'a = 5 + 6- 7',
+        ],),
+    ],
+)
+def test_filter_node_on(file):
+    changer = Changer(file)
+
+    @changer.converter
+    def change_something(node: Add, context: Context):
+        return Subtract(
+            whitespace_before=node.whitespace_before,
+            whitespace_after=node.whitespace_after,
+        )
+
+    @changer.filter
+    def filter_something(node: Add, context: Context) -> bool:
+        return True
+
+    results = []
+
+    for coordinate in changer.iterate_coordinates():
+        results.append(changer.apply_coordinate(coordinate))
+
+    assert len(results) == 1
+    assert results[0] == file.replace('+', '-')
+
+
+@pytest.mark.parametrize(
+    ['strings'],
+    [
+        ([
+            'a = 5 + 6- 7',
+        ],),
+    ],
+)
+def test_filter_node_off(file):
+    changer = Changer(file)
+
+    @changer.converter
+    def change_something(node: Add, context: Context):
+        return Subtract(
+            whitespace_before=node.whitespace_before,
+            whitespace_after=node.whitespace_after,
+        )
+
+    @changer.filter
+    def filter_something(node: Add, context: Context) -> bool:
+        return False
+
+    results = []
+
+    for coordinate in changer.iterate_coordinates():
+        results.append(changer.apply_coordinate(coordinate))
+
+    assert len(results) == 0
+
+
+@pytest.mark.parametrize(
+    ['strings'],
+    [
+        ([
+            'a = 5 + 6- 7',
+        ],),
+    ],
+)
+def test_filter_other_node_on(file):
+    changer = Changer(file)
+
+    @changer.converter
+    def change_something(node: Add, context: Context):
+        return Subtract(
+            whitespace_before=node.whitespace_before,
+            whitespace_after=node.whitespace_after,
+        )
+
+    @changer.filter
+    def filter_something(node: Subtract, context: Context) -> bool:
+        return True
+
+    results = []
+
+    for coordinate in changer.iterate_coordinates():
+        results.append(changer.apply_coordinate(coordinate))
+
+    assert len(results) == 1
+    assert results[0] == file.replace('+', '-')
+
+
+@pytest.mark.parametrize(
+    ['strings'],
+    [
+        ([
+            'a = 5 + 6- 7',
+        ],),
+    ],
+)
+def test_filter_other_node_off(file):
+    changer = Changer(file)
+
+    @changer.converter
+    def change_something(node: Add, context: Context):
+        return Subtract(
+            whitespace_before=node.whitespace_before,
+            whitespace_after=node.whitespace_after,
+        )
+
+    @changer.filter
+    def filter_something(node: Subtract, context: Context) -> bool:
+        return False
+
+    results = []
+
+    for coordinate in changer.iterate_coordinates():
+        results.append(changer.apply_coordinate(coordinate))
+
+    assert len(results) == 1
+    assert results[0] == file.replace('+', '-')
