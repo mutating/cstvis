@@ -18,3 +18,19 @@
 ![logo](https://raw.githubusercontent.com/pomponchik/cstvis/develop/docs/assets/logo_1.svg)
 
 A large number of source code tools (linters, formatters, and others) work with [CST](https://en.wikipedia.org/wiki/Parse_tree), a special representation of the source code that already has a tree shape (like [AST](https://en.wikipedia.org/wiki/Abstract_syntax_tree)), but still contains "extra" nodes such as spaces or comments. This library is a wrapper around such a tree, designed for convenient and iterative work with nodes: traversal and replacement.
+
+
+## Table of contents
+
+- [**Installation**](#installation)
+
+
+## Installation
+
+Install it:
+
+```bash
+pip install cstvis
+```
+
+You can also quickly try out this and other packages without having to install using [instld](https://github.com/pomponchik/instld).
