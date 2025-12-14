@@ -171,6 +171,35 @@ def test_changing_function_with_wrong_number_of_parameters(file):
 
 
 @pytest.mark.parametrize(
+    ['strings', 'expected_comment'],
+    [
+        (['a = 5 + 6- 7'], None),
+        (['a = 5 + 6- 7#'], ''),
+        (['a = 5 + 6- 7# ololo!'], ' ololo!'),
+        (['a = 5 + 6- 7# other_key: action'], ' other_key: action'),
+        (['a = 5 + 6- 7#key: action'],  'key: action'),
+        (['a = 5 + 6- 7# key: action'],  ' key: action'),
+        (['a = 5 + 6- 7 # key: action'],  ' key: action'),
+        (['a = 5 + 6- 7 # key: action# ololo!'],  ' key: action# ololo!'),
+    ],
+)
+def test_read_comments(file, expected_comment):
+    changer = Changer(file)
+
+    comments_containers = []
+
+    @changer.converter
+    def change_something(node: Add, context: Context):
+        comments_containers.append(context.comment)
+        return node
+
+    for coordinate in changer.iterate_coordinates():
+        changer.apply_coordinate(coordinate)
+
+    assert comments_containers[0] == expected_comment
+
+
+@pytest.mark.parametrize(
     ['strings', 'expected_metacodes'],
     [
         (['a = 5 + 6- 7'], []),
@@ -188,7 +217,7 @@ def test_read_metacodes_from_comment(file, expected_metacodes):
     metacodes_containers = []
 
     @changer.converter
-    def change_add_to_sub(node: Add, context: Context):
+    def change_something(node: Add, context: Context):
         metacodes_containers.append(context.get_metacodes('key'))
         return node
 
