@@ -1,3 +1,5 @@
+from typing import Any
+
 import pytest
 from libcst import Add, Subtract
 from full_match import match
@@ -225,3 +227,64 @@ def test_read_metacodes_from_comment(file, expected_metacodes):
         changer.apply_coordinate(coordinate)
 
     assert metacodes_containers[0] == expected_metacodes
+
+
+@pytest.mark.parametrize(
+    ['strings'],
+    [
+        ([
+            'a = 5 + 6- 7',
+        ],),
+    ],
+)
+def test_filter_any_on(file):
+    changer = Changer(file)
+
+    @changer.converter
+    def change_something(node: Add, context: Context):
+        return Subtract(
+            whitespace_before=node.whitespace_before,
+            whitespace_after=node.whitespace_after,
+        )
+
+    @changer.filter
+    def filter_something(node: Any, context: Context) -> bool:
+        return True
+
+    results = []
+
+    for coordinate in changer.iterate_coordinates():
+        results.append(changer.apply_coordinate(coordinate))
+
+    assert len(results) == 1
+    assert results[0] == file.replace('+', '-')
+
+
+@pytest.mark.parametrize(
+    ['strings'],
+    [
+        ([
+            'a = 5 + 6- 7',
+        ],),
+    ],
+)
+def test_filter_any_off(file):
+    changer = Changer(file)
+
+    @changer.converter
+    def change_something(node: Add, context: Context):
+        return Subtract(
+            whitespace_before=node.whitespace_before,
+            whitespace_after=node.whitespace_after,
+        )
+
+    @changer.filter
+    def filter_something(node: Any, context: Context) -> bool:
+        return False
+
+    results = []
+
+    for coordinate in changer.iterate_coordinates():
+        results.append(changer.apply_coordinate(coordinate))
+
+    assert len(results) == 0
