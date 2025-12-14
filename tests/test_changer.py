@@ -2,6 +2,7 @@ from typing import Optional
 
 import pytest
 from libcst import Add, Subtract
+from full_match import match
 
 from cstvis import Changer, Coordinate, Context
 
@@ -139,3 +140,31 @@ def test_to_different_changers_to_same_line(file):
         'a = 5 - 6- 7',
         'a = 5 + 6+ 7',
     ]
+
+
+@pytest.mark.parametrize(
+    ['strings'],
+    [
+        ([
+            'a = 5 + 6- 7',
+        ],),
+    ],
+)
+def test_changing_function_with_wrong_number_of_parameters(file):
+    changer = Changer(file)
+
+    with pytest.raises(ValueError, match=match('The converter is expected to accept 2 parameters: node and context; you have passed 3 parameters.')):
+        @changer.converter
+        def changing_function(node: Add, context: Context, something_else: str):
+            return Subtract(
+                whitespace_before=node.whitespace_before,
+                whitespace_after=node.whitespace_after,
+            )
+
+    with pytest.raises(ValueError, match=match('The converter is expected to accept 2 parameters: node and context; you have passed 1 parameters.')):
+        @changer.converter
+        def changing_function(node: Add):
+            return Subtract(
+                whitespace_before=node.whitespace_before,
+                whitespace_after=node.whitespace_after,
+            )
