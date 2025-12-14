@@ -33,12 +33,14 @@ class SuperTransformer(MatcherDecoratableTransformer):
     def __init__(
         self,
         target_coordinate: Coordinate,
-        nodes_mapping: Dict[Type[CSTNode], List[Callable[[CSTNode, Context], bool]]],
+        nodes_mapping: Dict[Type[CSTNode], List[Callable[[CSTNode, Context], CSTNode]]],
         comments: Dict[int, str],
+        filters: Dict[Type[CSTNode], List[Callable[[CSTNode, Context], bool]]],
     ):
         self.target_coordinate = target_coordinate
         self.nodes_mapping = nodes_mapping
         self.comments = comments
+        self.filters = filters
 
         super().__init__()
 
@@ -55,8 +57,12 @@ class SuperTransformer(MatcherDecoratableTransformer):
         )
 
         if coordinate == self.target_coordinate and type(original_node) in self.nodes_mapping:
-            for converter in self.nodes_mapping[type(original_node)]:
-                context = Context(coordinate, self.comments.get(coordinate.start_line))
-                return converter(updated_node, context)
+            context = Context(coordinate, self.comments.get(coordinate.start_line))
+            if type(original_node) in self.filters or CSTNode in self.filters:
+                for filter in self.filters[type(original_node)]:
+                    if not filter(original_node, context):
+                        return updated_node
+            converters = self.nodes_mapping[type(original_node)]
+            return converters[0](updated_node, context)
         else:
             return updated_node
