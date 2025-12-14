@@ -23,6 +23,7 @@ A large number of source code tools (linters, formatters, and others) work with 
 ## Table of contents
 
 - [**Installation**](#installation)
+- [**Usage**](#usage)
 
 
 ## Installation
@@ -34,3 +35,17 @@ pip install cstvis
 ```
 
 You can also quickly try out this and other packages without having to install using [instld](https://github.com/pomponchik/instld).
+
+
+## Usage
+
+This library is a wrapper around the [`libcst`](https://pypi.org/project/libcst/) library. Let's start the demonstration with the import:
+
+```python
+from cstvis import Changer, Coordinate
+```
+
+The flow of work is very simple:
+
+- Create an object of the `Changer` class.
+- Register converter functions that will convert some `CST` nodes to others. Each such function takes a node object as the first argument, and it must be accompanied by a type annotation. It is based on the annotation that the system will understand which nodes it needs to be applied to and which ones it does not.
