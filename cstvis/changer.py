@@ -30,7 +30,7 @@ class Changer:
         wrapper.visit(aggregator)
         return aggregator.comments
 
-    def filter(self, function: Callable[[CSTNode, Context, List[str]], bool]) -> Callable[[CSTNode, Context, List[str]], bool]:
+    def filter(self, function: Callable[[CSTNode, Context], bool]) -> Callable[[CSTNode, Context], bool]:
         self.filters.append(function)
         return function
 
