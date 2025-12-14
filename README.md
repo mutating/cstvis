@@ -48,4 +48,4 @@ from cstvis import Changer, Coordinate
 The flow of work is very simple:
 
 - Create an object of the `Changer` class.
-- Register converter functions that will convert some `CST` nodes to others. Each such function takes a node object as the first argument, and it must be accompanied by a type annotation. It is based on the annotation that the system will understand which nodes it needs to be applied to and which ones it does not.
+- Register converter functions that will convert some `CST` nodes to others, using the decorator. Each such function takes a node object as the first argument, and it must be accompanied by a type annotation. It is based on the annotation that the system will understand which nodes it needs to be applied to and which ones it does not.
