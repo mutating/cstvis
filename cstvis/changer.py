@@ -10,6 +10,7 @@ from cstvis.visitors.comments_aggregator import CommentsAggregator
 from cstvis.visitors.bloodhound import Bloodhound
 from cstvis.transformers.super_transformer import SuperTransformer
 from cstvis.dto import Context, Coordinate
+from cstvis.errors import TwoConvertersForOneNodeError
 
 
 class Changer:
@@ -38,16 +39,16 @@ class Changer:
         parameters = converter_signature.parameters
 
         if len(parameters) != 2:
-            raise ValueError
+            raise ValueError(f'The converter is expected to accept 2 parameters: node and context; you have passed {len(parameters)} parameters.')
 
         first_parameter = converter_signature.parameters[list(converter_signature.parameters)[0]]
         annotation = first_parameter.annotation if first_parameter.annotation is not _empty else CSTNode
 
-        if not issubclass(annotation, CSTNode):
-            raise ValueError
+        if not issubclass(annotation, CSTNode) or annotation is CSTNode:
+            raise TypeError('The type annotation for the first argument of the function must be descended from the libcst.CSTNode class.')
 
         if annotation in self.converters_by_types:
-            raise TypeError  # TODO: create an another exception class
+            raise TwoConvertersForOneNodeError('You cannot assign 2 or more converters to the same subtype of libcst.CSTNode.')  # TODO: create an another exception class
 
         self.converters.append(function)
         self.converters_by_types[annotation].append(function)
