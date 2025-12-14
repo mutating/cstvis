@@ -39,13 +39,57 @@ You can also quickly try out this and other packages without having to install u
 
 ## Usage
 
-This library is a wrapper around the [`libcst`](https://pypi.org/project/libcst/) library. Let's start the demonstration with the import:
-
-```python
-from cstvis import Changer, Coordinate
-```
+This library is a wrapper around the [`libcst`](https://pypi.org/project/libcst/) library. 
 
 The flow of work is very simple:
 
 - Create an object of the `Changer` class.
 - Register converter functions that will convert some `CST` nodes to others, using the decorator. Each such function takes a node object as the first argument, and it must be accompanied by a type annotation. It is based on the annotation that the system will understand which nodes it needs to be applied to and which ones it does not.
+- If necessary, also register filters, which are special functions that can prevent the system from changing certain nodes.
+- Iterate over atomic changes and apply them if necessary.
+
+Let me show you a simple example:
+
+```python
+from libcst import Subtract, Add
+from cstvis import Changer, Context
+from pathlib import Path
+
+
+changer = Changer(Path('tests/some_code/simple_sum.py').read_text())
+
+@changer.converter
+def change_add(node: Add, context: Context):
+    return Subtract(
+        whitespace_before=node.whitespace_before,
+        whitespace_after=node.whitespace_after,
+    )
+
+@changer.converter
+def change_substract(node: Subtract, context: Context):
+    return Add(
+        whitespace_before=node.whitespace_before,
+        whitespace_after=node.whitespace_after,
+    )
+
+for x in changer.iterate_coordinates():
+    print(x)
+    print(changer.apply_coordinate(x))
+
+#> Coordinate(file=None, class_name='Add', start_line=1, start_column=6, end_line=1, end_column=7)
+#> a = 4 - 5
+#> b = 15 - a
+#> c = b + a # kek
+#> 
+#> Coordinate(file=None, class_name='Subtract', start_line=2, start_column=7, end_line=2, end_column=8)
+#> a = 4 + 5
+#> b = 15 + a
+#> c = b + a # kek
+#> 
+#> Coordinate(file=None, class_name='Add', start_line=3, start_column=6, end_line=3, end_column=7)
+#> a = 4 + 5
+#> b = 15 - a
+#> c = b - a # kek
+```
+
+The key part of this example is the last two lines where the coordinates are iterated. What does it mean? The fact is that any change to the code that this library makes occurs in 2 stages: outline the coordinates of the change and make the change. Due to this separation, it becomes possible, for example, to divide this work between several threads or even several computers. However, this scheme also limits us. If you apply one coordinate change, the resulting code will differ from the original one and subsequent coordinates will no longer be possible to apply. You can only apply one change at a time.
