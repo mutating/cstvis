@@ -24,7 +24,7 @@ class Changer:
         self.converters_by_types = defaultdict(list)
 
     @cached_property
-    def comments_by_lines(self) -> Dict[int, str]:
+    def _comments_by_lines(self) -> Dict[int, str]:
         wrapper = metadata.MetadataWrapper(self.module)
         aggregator = CommentsAggregator()
         wrapper.visit(aggregator)
@@ -56,12 +56,12 @@ class Changer:
 
     def iterate_coordinates(self) -> Generator[Coordinate, None, None]:
         wrapper = metadata.MetadataWrapper(self.module)
-        printer = Bloodhound(self.converters_by_types, self.comments_by_lines)
+        printer = Bloodhound(self.converters_by_types, self._comments_by_lines)
 
         wrapper.visit(printer)
         yield from printer.coordinates
 
     def apply_coordinate(self, coordinate: Coordinate) -> str:
         wrapper = metadata.MetadataWrapper(self.module)
-        modified = wrapper.visit(SuperTransformer(coordinate, self.converters_by_types, self.comments_by_lines))
+        modified = wrapper.visit(SuperTransformer(coordinate, self.converters_by_types, self._comments_by_lines))
         return modified.code
