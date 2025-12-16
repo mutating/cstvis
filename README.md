@@ -55,19 +55,15 @@ from libcst import Subtract, Add
 from cstvis import Changer, Context
 from pathlib import Path
 
-
+# Content of the file:
+# a = 4 + 5
+# b = 15 - a
+# c = b + a # kek
 changer = Changer(Path('tests/some_code/simple_sum.py').read_text())
 
 @changer.converter
 def change_add(node: Add, context: Context):
     return Subtract(
-        whitespace_before=node.whitespace_before,
-        whitespace_after=node.whitespace_after,
-    )
-
-@changer.converter
-def change_substract(node: Subtract, context: Context):
-    return Add(
         whitespace_before=node.whitespace_before,
         whitespace_after=node.whitespace_after,
     )
@@ -81,11 +77,6 @@ for x in changer.iterate_coordinates():
 #> b = 15 - a
 #> c = b + a # kek
 #> 
-#> Coordinate(file=None, class_name='Subtract', start_line=2, start_column=7, end_line=2, end_column=8)
-#> a = 4 + 5
-#> b = 15 + a
-#> c = b + a # kek
-#> 
 #> Coordinate(file=None, class_name='Add', start_line=3, start_column=6, end_line=3, end_column=7)
 #> a = 4 + 5
 #> b = 15 - a
@@ -95,3 +86,28 @@ for x in changer.iterate_coordinates():
 The key part of this example is the last two lines where the coordinates are iterated. What does it mean? The fact is that any change to the code that this library makes occurs in 2 stages: outline the coordinates of the change and make the change. Due to this separation, it becomes possible, for example, to divide this work between several threads or even several computers. However, this scheme also limits us. If you apply one coordinate change, the resulting code will differ from the original one and subsequent coordinates will no longer be possible to apply. You can only apply one change at a time.
 
 A filter is a special function with the same signature as a converter, which we mark with the `@filter` decorator. This should decide whether to change a specific `CST` node or not, and return `True` if yes, or `False` if no. The filter is applied to all nodes if the node parameter does not have a type annotation, or if [Any](https://docs.python.org/3/library/typing.html#typing.Any) / [CSTNode](https://libcst.readthedocs.io/en/latest/nodes.html#libcst.CSTNode) annotation is used. If you specify a specific type of node in the annotation, the filter will be applied only to them. Any other annotations are not allowed.
+
+Let's look at another example (part of the code is omitted):
+
+```python
+count_adds = 0
+
+@changer.filter
+def only_first(node: Add, context: Context) -> bool:
+    global count_adds
+    
+    count_adds += 1
+    
+    return True if count_adds <= 1 else False
+
+for x in changer.iterate_coordinates():
+    print(x)
+    print(changer.apply_coordinate(x))
+
+#> Coordinate(file=None, class_name='Add', start_line=1, start_column=6, end_line=1, end_column=7)
+#> a = 4 - 5
+#> b = 15 - a
+#> c = b + a # kek
+```
+
+You see? Now, during the iteration, we got only the first version of possible changes, the rest are automatically filtered out because the filter function told us to do so.
