@@ -111,3 +111,9 @@ for x in changer.iterate_coordinates():
 ```
 
 You see? Now, during the iteration, we got only the first version of possible changes, the rest are automatically filtered out because the filter function told us to do so.
+
+So, now it's roughly clear how to use it. But what kind of `context` parameter do we see in converters and filters? It has 2 fields and 1 interesting method:
+
+- `coordinate` with fields `start_line: int`, `start_column: int`, `end_line: int`, `end_column: int` and some others. This identifies where we are at in the code.
+- `comment` - a comment line, if there is such a comment in the first line of this node, without a `#` at the beginning, or `None` if there is no comment.
+- `get_metacodes(key: Union[str, List[str]]) -> List[ParsedComment]` - a method that returns a list of parsed comments in [metacode format](https://github.com/pomponchik/metacode) related to this line of code.
