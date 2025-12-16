@@ -6,11 +6,10 @@ build-backend = "setuptools.build_meta"
 name = "cstvis"
 version = "0.0.1"
 authors = [{ name = "Evgeniy Blinov", email = "zheni-b@yandex.ru" }]
-description = ''
+description = 'Incremental change of CST'
 readme = "README.md"
 requires-python = ">=3.8"
-dependencies = ['libcst>=1.8.6']
-
+dependencies = ["libcst>=1.1.0 ; python_version == '3.8'", "libcst>=1.8.6 ; python_version > '3.8'", 'metacode>=0.0.4']
 classifiers = [
     "Operating System :: OS Independent",
     'Operating System :: MacOS :: MacOS X',
@@ -25,6 +24,8 @@ classifiers = [
     'Programming Language :: Python :: 3.12',
     'Programming Language :: Python :: 3.13',
     'Programming Language :: Python :: 3.14',
+    'Programming Language :: Python :: Free Threading',
+    'Programming Language :: Python :: Free Threading :: 3 - Stable',
     'License :: OSI Approved :: MIT License',
     'Intended Audience :: Developers',
     'Topic :: Software Development :: Libraries',
@@ -42,7 +43,7 @@ runner = "pytest"
 markers = ["mypy_testing"]
 
 [tool.ruff]
-lint.ignore = ['E501', 'E712']
+lint.ignore = ['E501', 'E712', 'PTH123', 'PTH118', 'PLR2004', 'PTH107', 'SIM105', 'SIM102', 'RET503', 'PT006']
 lint.select = ["ERA001", "YTT", "ASYNC", "BLE", "B", "A", "COM", "INP", "PIE", "T20", "PT", "RSE", "RET", "SIM", "SLOT", "TID252", "ARG", "PTH", "I", "C90", "N", "E", "W", "D201", "D202", "D419", "F", "PL", "PLE", "PLR", "PLW", "RUF", "TRY201", "TRY400", "TRY401"]
 format.quote-style = "single"
 

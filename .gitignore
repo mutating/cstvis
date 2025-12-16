@@ -2,6 +2,9 @@ __pycache__
 .pytest_cache
 .DS_Store
 test.py
+test_2.py
+test_3.py
+test_4.py
 *.egg-info
 dist
 venv
