@@ -1,8 +1,8 @@
-from typing import List, Union, Optional
 from dataclasses import dataclass
 from pathlib import Path
+from typing import List, Optional, Union
 
-from metacode import parse, ParsedComment
+from metacode import ParsedComment, parse
 
 
 @dataclass

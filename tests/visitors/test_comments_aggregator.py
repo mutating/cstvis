@@ -1,6 +1,5 @@
 import pytest
-
-from libcst import CSTNode, parse_module, metadata
+from libcst import metadata, parse_module
 
 from cstvis.visitors.comments_aggregator import CommentsAggregator
 
@@ -10,7 +9,7 @@ from cstvis.visitors.comments_aggregator import CommentsAggregator
     [
         ([
             'a = 5',
-            'b = 12 * a'
+            'b = 12 * a',
         ],),
     ],
 )

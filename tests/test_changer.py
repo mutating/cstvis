@@ -1,12 +1,14 @@
+# ruff: noqa: ARG001
+
 from typing import Any
 
 import pytest
-from libcst import Add, Subtract, CSTNode
 from full_match import match
+from libcst import Add, CSTNode, Subtract
 from metacode import ParsedComment
 
 from cstvis import Changer, Context
-
+from cstvis.errors import TwoConvertersForOneNodeError
 
 
 @pytest.mark.parametrize(
@@ -472,3 +474,75 @@ def test_filter_other_node_off(file):
 
     assert len(results) == 1
     assert results[0] == file.replace('+', '-')
+
+
+def test_converter_with_no_annotation():
+    changer = Changer('a = 5')
+
+    with pytest.raises(TypeError, match=r'The type annotation for the first argument of the function must be descended from the libcst.CSTNode class\.'):
+        @changer.converter
+        def converter_func(node, context):
+            return node
+
+
+def test_converter_with_any_annotation():
+    changer = Changer('a = 5')
+
+    with pytest.raises(TypeError, match=r'issubclass\(\) arg 1 must be a class'):
+        @changer.converter
+        def converter_func(node: Any, context: Context):
+            return node
+
+
+def test_converter_with_invalid_type_annotation():
+    changer = Changer('a = 5')
+
+    with pytest.raises(TypeError, match=r'The type annotation for the first argument of the function must be descended from the libcst.CSTNode class\.'):
+        @changer.converter
+        def converter_func(node: str, context: Context):
+            return node
+
+
+def test_converter_with_cstnode_annotation_restriction():
+    changer = Changer('a = 5')
+
+    with pytest.raises(TypeError, match=r'The type annotation for the first argument of the function must be descended from the libcst.CSTNode class\.'):
+        @changer.converter
+        def converter_func(node: CSTNode, context: Context):
+            return node
+
+
+def test_filter_with_wrong_number_of_parameters():
+    changer = Changer('a = 5')
+
+    with pytest.raises(ValueError, match=r'The filter is expected to accept 2 parameters: node and context; you have passed 3 parameters\.'):
+        @changer.filter
+        def filter_func(node: Add, context: Context, extra_param: str):
+            return True
+
+    with pytest.raises(ValueError, match=r'The filter is expected to accept 2 parameters: node and context; you have passed 1 parameters\.'):
+        @changer.filter
+        def filter_func(node: Add):
+            return True
+
+
+def test_filter_with_invalid_annotation():
+    changer = Changer('a = 5')
+
+    with pytest.raises(TypeError, match=r'The type annotation for the first argument of the function must be descended from the libcst.CSTNode class \(or be a libcst.CSTNode class if you want to set a filter for all nodes\.\)\.'):
+        @changer.filter
+        def filter_func(node: str, context: Context):
+            return True
+
+
+def test_two_converters_for_same_node_error():
+    changer = Changer('a = 5')
+
+    @changer.converter
+    def converter1(node: Add, context: Context):
+        return node
+
+    with pytest.raises(TwoConvertersForOneNodeError, match=r'You cannot assign 2 or more converters to the same subtype of libcst.CSTNode\.'):
+        @changer.converter
+        def converter2(node: Add, context: Context):
+            return node

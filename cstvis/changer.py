@@ -1,16 +1,15 @@
-from typing import Callable, List, Dict, Generator, Optional, Any
-from pathlib import Path
 from collections import defaultdict
-from inspect import signature, _empty
 from functools import cached_property
+from inspect import _empty, signature
+from typing import Any, Callable, Dict, Generator, Type, List
 
-from libcst import CSTNode, parse_module, metadata
+from libcst import CSTNode, metadata, parse_module
 
-from cstvis.visitors.comments_aggregator import CommentsAggregator
-from cstvis.visitors.bloodhound import Bloodhound
-from cstvis.transformers.super_transformer import SuperTransformer
 from cstvis.dto import Context, Coordinate
 from cstvis.errors import TwoConvertersForOneNodeError
+from cstvis.transformers.super_transformer import SuperTransformer
+from cstvis.visitors.bloodhound import Bloodhound
+from cstvis.visitors.comments_aggregator import CommentsAggregator
 
 
 class Changer:
@@ -18,11 +17,8 @@ class Changer:
         self.source = source
         self.module = parse_module(source)
 
-        self.filters = []
-        self.converters = []
-
-        self.converters_by_types = defaultdict(list)
-        self.filters_by_types = defaultdict(list)
+        self.converters_by_types: Dict[Type[CSTNode], List[Callable[[CSTNode, Context], CSTNode]]] = defaultdict(list)
+        self.filters_by_types: Dict[Type[CSTNode], List[Callable[[CSTNode, Context], bool]]] = defaultdict(list)
 
     @cached_property
     def _comments_by_lines(self) -> Dict[int, str]:
@@ -38,7 +34,7 @@ class Changer:
         if len(parameters) != 2:
             raise ValueError(f'The filter is expected to accept 2 parameters: node and context; you have passed {len(parameters)} parameters.')
 
-        first_parameter = converter_signature.parameters[list(converter_signature.parameters)[0]]
+        first_parameter = converter_signature.parameters[next(iter(converter_signature.parameters))]
         annotation = first_parameter.annotation if first_parameter.annotation is not _empty else CSTNode
         if annotation is Any:
             annotation = CSTNode
@@ -56,7 +52,7 @@ class Changer:
         if len(parameters) != 2:
             raise ValueError(f'The converter is expected to accept 2 parameters: node and context; you have passed {len(parameters)} parameters.')
 
-        first_parameter = converter_signature.parameters[list(converter_signature.parameters)[0]]
+        first_parameter = converter_signature.parameters[next(iter(converter_signature.parameters))]
         annotation = first_parameter.annotation if first_parameter.annotation is not _empty else CSTNode
 
         if not issubclass(annotation, CSTNode) or annotation is CSTNode:

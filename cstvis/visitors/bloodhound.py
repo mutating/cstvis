@@ -1,8 +1,8 @@
-from typing import Callable, List, Dict, Type, Optional
+from typing import Callable, Dict, List, Optional, Type
 
 from libcst import CSTNode, CSTVisitor, metadata
 
-from cstvis.dto import Coordinate, Context
+from cstvis.dto import Context, Coordinate
 
 
 class Bloodhound(CSTVisitor):
@@ -10,7 +10,7 @@ class Bloodhound(CSTVisitor):
 
     def __init__(
         self,
-        nodes_mapping: Dict[Type[CSTNode], List[Callable[[CSTNode, Coordinate, Optional[str]], bool]]],
+        nodes_mapping: Dict[Type[CSTNode], List[Callable[[CSTNode, Context], CSTNode]]],
         comments: Dict[int, str],
         filters: Dict[Type[CSTNode], List[Callable[[CSTNode, Context], bool]]],
     ) -> None:
@@ -30,12 +30,12 @@ class Bloodhound(CSTVisitor):
             end_column=position.end.column,
         )
 
-        if self.nodes_mapping.get(type(node)) or self.nodes_mapping.get(CSTNode):
-            filters = self.filters.get(type(node), []) + self.filters.get(CSTNode, [])
+        if self.nodes_mapping.get(type(node)) or self.nodes_mapping.get(CSTNode):  # type: ignore[type-abstract]
+            filters = self.filters.get(type(node), []) + self.filters.get(CSTNode, [])  # type: ignore[type-abstract]
             context = Context(coordinate, self.comments.get(coordinate.start_line))
             if filters:
-                for filter in filters:
-                    if not filter(node, context):
+                for filter_function in filters:
+                    if not filter_function(node, context):
                         return True
             self.coordinates.append(
                 coordinate,
