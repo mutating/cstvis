@@ -53,9 +53,9 @@ class Changer:
             raise ValueError(f'The converter is expected to accept 2 parameters: node and context; you have passed {len(parameters)} parameters.')
 
         first_parameter = converter_signature.parameters[next(iter(converter_signature.parameters))]
-        annotation = first_parameter.annotation if first_parameter.annotation is not _empty else CSTNode
+        annotation = first_parameter.annotation if first_parameter.annotation is not _empty and first_parameter.annotation is not Any else CSTNode
 
-        if not issubclass(annotation, CSTNode) or annotation is CSTNode:
+        if annotation is CSTNode or not issubclass(annotation, CSTNode):
             raise TypeError('The type annotation for the first argument of the function must be descended from the libcst.CSTNode class.')
 
         if annotation in self.converters_by_types:

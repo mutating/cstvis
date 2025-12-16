@@ -488,7 +488,7 @@ def test_converter_with_no_annotation():
 def test_converter_with_any_annotation():
     changer = Changer('a = 5')
 
-    with pytest.raises(TypeError, match=r'issubclass\(\) arg 1 must be a class'):
+    with pytest.raises(TypeError, match='The type annotation for the first argument of the function must be descended from the libcst.CSTNode class.'):
         @changer.converter
         def converter_func(node: Any, context: Context):
             return node
