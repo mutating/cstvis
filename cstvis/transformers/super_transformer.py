@@ -48,7 +48,7 @@ class SuperTransformer(MatcherDecoratableTransformer):
         super().__init__()
 
     @leave_all
-    def leave(self, original_node: CSTNode, updated_node: CSTNode) -> CSTNode:
+    def leave(self, original_node, updated_node):  # type: ignore[no-untyped-def]
         position = self.get_metadata(metadata.PositionProvider, original_node)
         coordinate = Coordinate(
             file=None,
