@@ -40,7 +40,7 @@ class Changer:
             annotation = CSTNode
 
         if not issubclass(annotation, CSTNode):
-            raise TypeError('The type annotation for the first argument of the function must be descended from the libcst.CSTNode class (or be a libcst.CSTNode class if you want to set a filter for all nodes.).')
+            raise TypeError('The type annotation for the first argument of the function must be descended from the libcst.CSTNode class (or be a libcst.CSTNode class if you want to set a filter for all nodes).')
 
         self.filters_by_types[annotation].append(function)
         return function

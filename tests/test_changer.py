@@ -479,7 +479,7 @@ def test_filter_other_node_off(file):
 def test_converter_with_no_annotation():
     changer = Changer('a = 5')
 
-    with pytest.raises(TypeError, match=r'The type annotation for the first argument of the function must be descended from the libcst.CSTNode class\.'):
+    with pytest.raises(TypeError, match=match('The type annotation for the first argument of the function must be descended from the libcst.CSTNode class.')):
         @changer.converter
         def converter_func(node, context):
             return node
@@ -488,7 +488,7 @@ def test_converter_with_no_annotation():
 def test_converter_with_any_annotation():
     changer = Changer('a = 5')
 
-    with pytest.raises(TypeError, match='The type annotation for the first argument of the function must be descended from the libcst.CSTNode class.'):
+    with pytest.raises(TypeError, match=match('The type annotation for the first argument of the function must be descended from the libcst.CSTNode class.')):
         @changer.converter
         def converter_func(node: Any, context: Context):
             return node
@@ -497,7 +497,7 @@ def test_converter_with_any_annotation():
 def test_converter_with_invalid_type_annotation():
     changer = Changer('a = 5')
 
-    with pytest.raises(TypeError, match=r'The type annotation for the first argument of the function must be descended from the libcst.CSTNode class\.'):
+    with pytest.raises(TypeError, match=match('The type annotation for the first argument of the function must be descended from the libcst.CSTNode class.')):
         @changer.converter
         def converter_func(node: str, context: Context):
             return node
@@ -506,7 +506,7 @@ def test_converter_with_invalid_type_annotation():
 def test_converter_with_cstnode_annotation_restriction():
     changer = Changer('a = 5')
 
-    with pytest.raises(TypeError, match=r'The type annotation for the first argument of the function must be descended from the libcst.CSTNode class\.'):
+    with pytest.raises(TypeError, match=match('The type annotation for the first argument of the function must be descended from the libcst.CSTNode class.')):
         @changer.converter
         def converter_func(node: CSTNode, context: Context):
             return node
@@ -515,12 +515,12 @@ def test_converter_with_cstnode_annotation_restriction():
 def test_filter_with_wrong_number_of_parameters():
     changer = Changer('a = 5')
 
-    with pytest.raises(ValueError, match=r'The filter is expected to accept 2 parameters: node and context; you have passed 3 parameters\.'):
+    with pytest.raises(ValueError, match=match('The filter is expected to accept 2 parameters: node and context; you have passed 3 parameters.')):
         @changer.filter
         def filter_func(node: Add, context: Context, extra_param: str):
             return True
 
-    with pytest.raises(ValueError, match=r'The filter is expected to accept 2 parameters: node and context; you have passed 1 parameters\.'):
+    with pytest.raises(ValueError, match=match('The filter is expected to accept 2 parameters: node and context; you have passed 1 parameters.')):
         @changer.filter
         def filter_func(node: Add):
             return True
@@ -529,7 +529,7 @@ def test_filter_with_wrong_number_of_parameters():
 def test_filter_with_invalid_annotation():
     changer = Changer('a = 5')
 
-    with pytest.raises(TypeError, match=r'The type annotation for the first argument of the function must be descended from the libcst.CSTNode class \(or be a libcst.CSTNode class if you want to set a filter for all nodes\.\)\.'):
+    with pytest.raises(TypeError, match=match('The type annotation for the first argument of the function must be descended from the libcst.CSTNode class (or be a libcst.CSTNode class if you want to set a filter for all nodes).')):
         @changer.filter
         def filter_func(node: str, context: Context):
             return True
@@ -542,7 +542,7 @@ def test_two_converters_for_same_node_error():
     def converter1(node: Add, context: Context):
         return node
 
-    with pytest.raises(TwoConvertersForOneNodeError, match=r'You cannot assign 2 or more converters to the same subtype of libcst.CSTNode\.'):
+    with pytest.raises(TwoConvertersForOneNodeError, match=match('You cannot assign 2 or more converters to the same subtype of libcst.CSTNode.')):
         @changer.converter
         def converter2(node: Add, context: Context):
             return node
