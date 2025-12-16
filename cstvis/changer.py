@@ -1,7 +1,7 @@
 from collections import defaultdict
 from functools import cached_property
 from inspect import _empty, signature
-from typing import Any, Callable, Dict, Generator, Type, List
+from typing import Any, Callable, Dict, Generator, List, Type
 
 from libcst import CSTNode, metadata, parse_module
 

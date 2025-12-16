@@ -1,4 +1,4 @@
-from typing import Callable, Dict, List, Optional, Type
+from typing import Callable, Dict, List, Type
 
 from libcst import CSTNode, CSTVisitor, metadata
 

@@ -1,4 +1,4 @@
-from typing import Callable, Dict, List, Type, Any
+from typing import Any, Callable, Dict, List, Type
 
 import libcst.matchers as matchers_module
 from libcst import CSTNode, metadata
