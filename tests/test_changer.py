@@ -7,7 +7,7 @@ from full_match import match
 from libcst import Add, CSTNode, Subtract
 from metacode import ParsedComment
 
-from cstvis import Changer, Context
+from cstvis import Changer, Context, Collector
 from cstvis.errors import TwoConvertersForOneNodeError
 
 
@@ -546,3 +546,43 @@ def test_two_converters_for_same_node_error():
         @changer.converter
         def converter2(node: Add, context: Context):
             return node
+
+
+def test_use_collector_for_converter():
+    collector = Collector()
+
+    @collector.converter
+    def some_converter(node: Add, context: Context):
+        return Subtract(
+            whitespace_before=node.whitespace_before,
+            whitespace_after=node.whitespace_after,
+        )
+
+    changer = Changer('a = 5 + 5', collector=collector)
+
+    assert [changer.apply_coordinate(coordinate) for coordinate in changer.iterate_coordinates()] == ['a = 5 - 5']
+
+
+def test_use_collector_for_converter_and_filter():
+    collector = Collector()
+
+    filters_value = False
+
+    @collector.converter
+    def some_converter(node: Add, context: Context):
+        return Subtract(
+            whitespace_before=node.whitespace_before,
+            whitespace_after=node.whitespace_after,
+        )
+
+    @collector.filter
+    def some_filter(node: Add, context: Context):
+        return filters_value
+
+    changer = Changer('a = 5 + 5', collector=collector)
+
+    assert [changer.apply_coordinate(coordinate) for coordinate in changer.iterate_coordinates()] == []
+
+    filters_value = True
+
+    assert [changer.apply_coordinate(coordinate) for coordinate in changer.iterate_coordinates()] == ['a = 5 - 5']

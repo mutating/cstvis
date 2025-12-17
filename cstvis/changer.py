@@ -1,11 +1,12 @@
 from collections import defaultdict
 from functools import cached_property
 from inspect import _empty, signature
-from typing import Any, Callable, Dict, Generator, List, Type
+from typing import Any, Callable, Dict, Generator, List, Type, Optional
 
 from libcst import CSTNode, metadata, parse_module
 
 from cstvis.dto import Context, Coordinate
+from cstvis.collector import Collector
 from cstvis.errors import TwoConvertersForOneNodeError
 from cstvis.transformers.super_transformer import SuperTransformer
 from cstvis.visitors.bloodhound import Bloodhound
@@ -13,12 +14,18 @@ from cstvis.visitors.comments_aggregator import CommentsAggregator
 
 
 class Changer:
-    def __init__(self, source: str) -> None:
+    def __init__(self, source: str, collector: Optional[Collector] = None) -> None:
         self.source = source
         self.module = parse_module(source)
 
         self.converters_by_types: Dict[Type[CSTNode], List[Callable[[CSTNode, Context], CSTNode]]] = defaultdict(list)
         self.filters_by_types: Dict[Type[CSTNode], List[Callable[[CSTNode, Context], bool]]] = defaultdict(list)
+
+        if collector is not None:
+            for filter in collector.filters:
+                self.filter(filter)
+            for converter in collector.converters:
+                self.converter(converter)
 
     @cached_property
     def _comments_by_lines(self) -> Dict[int, str]:
