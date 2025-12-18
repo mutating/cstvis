@@ -65,9 +65,6 @@ class Changer:
         if annotation is CSTNode or not issubclass(annotation, CSTNode):
             raise TypeError('The type annotation for the first argument of the function must be descended from the libcst.CSTNode class.')
 
-        if annotation in self.converters_by_types:
-            raise TwoConvertersForOneNodeError('You cannot assign 2 or more converters to the same subtype of libcst.CSTNode.')
-
         self.converters_by_types[annotation].append(function)
         return function
 

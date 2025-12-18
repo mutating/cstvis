@@ -1,8 +1,10 @@
 from typing import Callable, Dict, List, Type
+from copy import deepcopy
 
 from libcst import CSTNode, CSTVisitor, metadata
 
 from cstvis.dto import Context, Coordinate
+from cstvis.utils.function_id import get_function_id
 
 
 class Bloodhound(CSTVisitor):
@@ -30,15 +32,20 @@ class Bloodhound(CSTVisitor):
             end_column=position.end.column,
         )
 
-        if self.nodes_mapping.get(type(node)) or self.nodes_mapping.get(CSTNode):  # type: ignore[type-abstract]
+        converters = self.nodes_mapping.get(type(node), []) + self.nodes_mapping.get(CSTNode, [])
+
+        if converters:  # type: ignore[type-abstract]
             filters = self.filters.get(type(node), []) + self.filters.get(CSTNode, [])  # type: ignore[type-abstract]
             context = Context(coordinate, self.comments.get(coordinate.start_line))
             if filters:
                 for filter_function in filters:
                     if not filter_function(node, context):
                         return True
-            self.coordinates.append(
-                coordinate,
-            )
+            for converter_id in set([get_function_id(x) for x in converters]):
+                emitting_coordinate = deepcopy(coordinate)
+                emitting_coordinate.converter_id = converter_id
+                self.coordinates.append(
+                    emitting_coordinate,
+                )
 
         return True

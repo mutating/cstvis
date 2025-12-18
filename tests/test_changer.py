@@ -4,7 +4,7 @@ from typing import Any
 
 import pytest
 from full_match import match
-from libcst import Add, CSTNode, Subtract
+from libcst import Add, Subtract, Multiply, CSTNode
 from metacode import ParsedComment
 
 from cstvis import Changer, Context, Collector
@@ -83,7 +83,7 @@ def test_apply_one_change(file):
     ['strings'],
     [
         ([
-            'a = 5 + 6+ 7',
+            'a = 5 + 6+ 7 +  8',
         ],),
     ],
 )
@@ -102,10 +102,11 @@ def test_apply_two_changes_at_same_line(file):
     for coordinate in changer.iterate_coordinates():
         results.append(changer.apply_coordinate(coordinate))
 
-    assert len(results) == 2
+    assert len(results) == 3
     assert results == [
-        'a = 5 - 6+ 7',
-        'a = 5 + 6- 7',
+        'a = 5 - 6+ 7 +  8',
+        'a = 5 + 6- 7 +  8',
+        'a = 5 + 6+ 7 -  8',
     ]
 
 
@@ -535,17 +536,24 @@ def test_filter_with_invalid_annotation():
             return True
 
 
-def test_two_converters_for_same_node_error():
-    changer = Changer('a = 5')
+def test_two_converters_for_same_node():
+    changer = Changer('5 + 5')
 
     @changer.converter
     def converter1(node: Add, context: Context):
-        return node
+        return Subtract(
+            whitespace_before=node.whitespace_before,
+            whitespace_after=node.whitespace_after,
+        )
 
-    with pytest.raises(TwoConvertersForOneNodeError, match=match('You cannot assign 2 or more converters to the same subtype of libcst.CSTNode.')):
-        @changer.converter
-        def converter2(node: Add, context: Context):
-            return node
+    @changer.converter
+    def converter2(node: Add, context: Context):
+        return Multiply(
+            whitespace_before=node.whitespace_before,
+            whitespace_after=node.whitespace_after,
+        )
+
+    assert [changer.apply_coordinate(coordinate) for coordinate in changer.iterate_coordinates()] == ['5 - 5', '5 * 5']
 
 
 def test_use_collector_for_converter():
