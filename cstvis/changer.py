@@ -82,9 +82,6 @@ class Changer:
         first_parameter = converter_signature.parameters[next(iter(converter_signature.parameters))]
         super_annotation = first_parameter.annotation if first_parameter.annotation is not _empty and first_parameter.annotation is not Any else CSTNode
 
-        if super_annotation is Any:
-            super_annotation = CSTNode
-
         annotations = self._separate_annotation(super_annotation)
 
         for annotation in annotations:
