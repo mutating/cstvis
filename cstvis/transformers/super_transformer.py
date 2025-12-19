@@ -78,7 +78,7 @@ class SuperTransformer(MatcherDecoratableTransformer):
 
         if coordinate == target_coordinate_without_converter_id and converters:
             context = Context(coordinate, self.comments.get(coordinate.start_line))
-            for converter in converters:
+            for converter in converters:  # pragma: no branch
                 if get_function_id(converter) == self.target_coordinate.converter_id:
                     return converter(updated_node, context)
         return updated_node

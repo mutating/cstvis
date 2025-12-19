@@ -670,3 +670,13 @@ def test_converter_for_any():
 
     [changer.apply_coordinate(coordinate) for coordinate in changer.iterate_coordinates()]
     assert len(nodes) > 10
+
+
+def test_if_node_is_not_exist_nothing_changed():
+    changer = Changer('5 - 5 + 5')
+
+    @changer.converter
+    def do_something(node: float, context):
+        return node
+
+    assert [changer.apply_coordinate(coordinate) for coordinate in changer.iterate_coordinates()] == []
