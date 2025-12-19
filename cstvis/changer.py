@@ -38,9 +38,9 @@ class Changer:
         self.filters_by_types: Dict[Type[CSTNode], List[Callable[[CSTNode, Context], bool]]] = defaultdict(list)
 
         if collector is not None:
-            for collected_filter in collector.filters:
+            for collected_filter in collector._filters:
                 self.filter(collected_filter)
-            for collected_converter in collector.converters:
+            for collected_converter in collector._converters:
                 self.converter(collected_converter)
 
     @cached_property

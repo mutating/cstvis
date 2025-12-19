@@ -8,13 +8,13 @@ from cstvis.dto import Context
 
 @dataclass
 class Collector:
-    filters: List[Callable[[CSTNode, Context], bool]] = field(default_factory=list)
-    converters: List[Callable[[CSTNode, Context], CSTNode]] = field(default_factory=list)
+    _filters: List[Callable[[CSTNode, Context], bool]] = field(default_factory=list)
+    _converters: List[Callable[[CSTNode, Context], CSTNode]] = field(default_factory=list)
 
     def filter(self, function: Callable[[CSTNode, Context], bool]) -> Callable[[CSTNode, Context], bool]:
-        self.filters.append(function)
+        self._filters.append(function)
         return function
 
     def converter(self, function: Callable[[CSTNode, Context], CSTNode]) -> Callable[[CSTNode, Context], CSTNode]:
-        self.converters.append(function)
+        self._converters.append(function)
         return function
