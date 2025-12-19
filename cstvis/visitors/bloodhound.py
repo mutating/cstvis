@@ -1,5 +1,5 @@
-from typing import Callable, Dict, List, Type
 from copy import deepcopy
+from typing import Callable, Dict, List, Type
 
 from libcst import CSTNode, CSTVisitor, metadata
 

@@ -1,4 +1,4 @@
-from typing import Callable, Any
+from typing import Any, Callable
 
 
 def get_function_id(function: Callable[..., Any]) -> str:

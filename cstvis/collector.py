@@ -1,5 +1,5 @@
-from typing import List, Callable
 from dataclasses import dataclass, field
+from typing import Callable, List
 
 from libcst import CSTNode
 

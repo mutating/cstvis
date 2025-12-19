@@ -1,7 +1,18 @@
 from collections import defaultdict
 from functools import cached_property
-from inspect import _empty, signature, isclass
-from typing import Any, Callable, Dict, Generator, List, Type, Optional, Union, get_args, get_origin
+from inspect import _empty, isclass, signature
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Generator,
+    List,
+    Optional,
+    Type,
+    Union,
+    get_args,
+    get_origin,
+)
 
 # TODO: Delete this try-except if Python's version is >= 3.10
 try:
@@ -9,10 +20,10 @@ try:
 except ImportError:  # pragma: no cover
     from typing import Union as UnionType  # type: ignore[assignment, unused-ignore]
 
-from libcst import CSTNode, Integer, Float, SimpleString, metadata, parse_module
+from libcst import CSTNode, Float, Integer, SimpleString, metadata, parse_module
 
-from cstvis.dto import Context, Coordinate
 from cstvis.collector import Collector
+from cstvis.dto import Context, Coordinate
 from cstvis.transformers.super_transformer import SuperTransformer
 from cstvis.visitors.bloodhound import Bloodhound
 from cstvis.visitors.comments_aggregator import CommentsAggregator
@@ -27,10 +38,10 @@ class Changer:
         self.filters_by_types: Dict[Type[CSTNode], List[Callable[[CSTNode, Context], bool]]] = defaultdict(list)
 
         if collector is not None:
-            for filter in collector.filters:
-                self.filter(filter)
-            for converter in collector.converters:
-                self.converter(converter)
+            for collected_filter in collector.filters:
+                self.filter(collected_filter)
+            for collected_converter in collector.converters:
+                self.converter(collected_converter)
 
     @cached_property
     def _comments_by_lines(self) -> Dict[int, str]:
@@ -97,19 +108,19 @@ class Changer:
         if isclass(annotation) and issubclass(annotation, CSTNode):
             return [annotation]
 
-        elif get_origin(annotation) is Union or get_origin(annotation) is UnionType:
+        if get_origin(annotation) is Union or get_origin(annotation) is UnionType:
             result = []
             for argument in get_args(annotation):
                 result += self._separate_annotation(argument)
             return result
 
-        elif annotation is int:
+        if annotation is int:
             return [Integer]
 
-        elif annotation is float:
+        if annotation is float:
             return [Float]
 
-        elif annotation is str:
+        if annotation is str:
             return [SimpleString]
 
         raise TypeError('The type annotation for the first argument of the function must be descended from the libcst.CSTNode class.')

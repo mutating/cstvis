@@ -54,8 +54,7 @@ class SuperTransformer(MatcherDecoratableTransformer):
     def leave(self, original_node, updated_node):  # type: ignore[no-untyped-def]
         if id(original_node) in self.nodes_ids:
             return updated_node
-        else:
-            self.nodes_ids.add(id(original_node))
+        self.nodes_ids.add(id(original_node))
 
         position = self.get_metadata(metadata.PositionProvider, original_node)
         coordinate = Coordinate(
