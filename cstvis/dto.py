@@ -13,6 +13,7 @@ class Coordinate:
     start_column: int
     end_line: int
     end_column: int
+    converter_id: Optional[str] = None
 
 @dataclass
 class Context:
