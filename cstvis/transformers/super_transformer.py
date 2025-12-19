@@ -74,7 +74,8 @@ class SuperTransformer(MatcherDecoratableTransformer):
             end_column=self.target_coordinate.end_column,
         )
 
-        converters = self.nodes_mapping.get(type(original_node))
+        converters = self.nodes_mapping.get(type(original_node), []) + self.nodes_mapping.get(CSTNode, [])
+
         if coordinate == target_coordinate_without_converter_id and converters:
             context = Context(coordinate, self.comments.get(coordinate.start_line))
             for converter in converters:

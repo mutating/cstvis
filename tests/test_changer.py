@@ -643,3 +643,17 @@ def test_convert_plus_one():
         return node.with_changes(value=repr(node.evaluated_value + 1))  # type: ignore[attr-defined]
 
     assert set(changer.apply_coordinate(coordinate) for coordinate in changer.iterate_coordinates()) == {'6 - 5 + 5', '5 - 6 + 5', '5 - 5 + 6'}
+
+
+def test_converter_for_any():
+    changer = Changer('5 - 5 + 5')
+
+    nodes = []
+
+    @changer.converter
+    def do_something(node: Any, context):
+        nodes.append(nodes)
+        return node
+
+    [changer.apply_coordinate(coordinate) for coordinate in changer.iterate_coordinates()]
+    assert len(nodes) > 10
