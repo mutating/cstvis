@@ -640,6 +640,6 @@ def test_convert_plus_one():
 
     @changer.converter
     def convert_ints(node: int, context):
-        return node.with_changes(value=repr(node.evaluated_value + 1))
+        return node.with_changes(value=repr(node.evaluated_value + 1))  # type: ignore[attr-defined]
 
     assert set(changer.apply_coordinate(coordinate) for coordinate in changer.iterate_coordinates()) == {'6 - 5 + 5', '5 - 6 + 5', '5 - 5 + 6'}
