@@ -1,4 +1,4 @@
-from typing import Any, Callable, Dict, List, Type
+from typing import Any, Callable, Dict, List, Set, Type
 
 import libcst.matchers as matchers_module
 from libcst import CSTNode, metadata
@@ -41,15 +41,22 @@ class SuperTransformer(MatcherDecoratableTransformer):
         target_coordinate: Coordinate,
         nodes_mapping: Dict[Type[CSTNode], List[Callable[[CSTNode, Context], CSTNode]]],
         comments: Dict[int, str],
+        nodes_ids: Set[int],
     ):
         self.target_coordinate = target_coordinate
         self.nodes_mapping = nodes_mapping
         self.comments = comments
+        self.nodes_ids = nodes_ids
 
         super().__init__()
 
     @leave_all
     def leave(self, original_node, updated_node):  # type: ignore[no-untyped-def]
+        if id(original_node) in self.nodes_ids:
+            return updated_node
+        else:
+            self.nodes_ids.add(id(original_node))
+
         position = self.get_metadata(metadata.PositionProvider, original_node)
         coordinate = Coordinate(
             file=None,

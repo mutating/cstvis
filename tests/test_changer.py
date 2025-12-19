@@ -1,14 +1,13 @@
 # ruff: noqa: ARG001
 
-from typing import Any
+from typing import Union, Any
 
 import pytest
 from full_match import match
-from libcst import Add, Subtract, Multiply, CSTNode
+from libcst import Add, Subtract, Multiply, SimpleString, CSTNode
 from metacode import ParsedComment
 
 from cstvis import Changer, Context, Collector
-from cstvis.errors import TwoConvertersForOneNodeError
 
 
 @pytest.mark.parametrize(
@@ -478,39 +477,53 @@ def test_filter_other_node_off(file):
 
 
 def test_converter_with_no_annotation():
-    changer = Changer('a = 5')
+    changer = Changer('1')
 
-    with pytest.raises(TypeError, match=match('The type annotation for the first argument of the function must be descended from the libcst.CSTNode class.')):
-        @changer.converter
-        def converter_func(node, context):
-            return node
+    @changer.converter
+    def converter_func(node, context):
+        return node
+
+    assert [changer.apply_coordinate(coordinate) for coordinate in changer.iterate_coordinates()]
 
 
 def test_converter_with_any_annotation():
-    changer = Changer('a = 5')
+    changer = Changer('1')
 
-    with pytest.raises(TypeError, match=match('The type annotation for the first argument of the function must be descended from the libcst.CSTNode class.')):
-        @changer.converter
-        def converter_func(node: Any, context: Context):
-            return node
+    @changer.converter
+    def converter_func(node: Any, context):
+        return node
 
-
-def test_converter_with_invalid_type_annotation():
-    changer = Changer('a = 5')
-
-    with pytest.raises(TypeError, match=match('The type annotation for the first argument of the function must be descended from the libcst.CSTNode class.')):
-        @changer.converter
-        def converter_func(node: str, context: Context):
-            return node
+    assert [changer.apply_coordinate(coordinate) for coordinate in changer.iterate_coordinates()]
 
 
 def test_converter_with_cstnode_annotation_restriction():
-    changer = Changer('a = 5')
+    changer = Changer('1')
 
-    with pytest.raises(TypeError, match=match('The type annotation for the first argument of the function must be descended from the libcst.CSTNode class.')):
-        @changer.converter
-        def converter_func(node: CSTNode, context: Context):
-            return node
+    @changer.converter
+    def converter_func(node: CSTNode, context):
+        return node
+
+    assert [changer.apply_coordinate(coordinate) for coordinate in changer.iterate_coordinates()]
+
+
+def test_convert_str():
+    changer = Changer('a = "kek"')
+
+    nodes = []
+
+    @changer.converter
+    def converter_func(node: str, context: Context):
+        nodes.append(node)
+        print('kek')
+        return node
+
+    for coordinate in changer.iterate_coordinates():
+        print('lol', coordinate)
+        changer.apply_coordinate(coordinate)
+
+    print(nodes)
+    assert len(nodes) == 1
+    assert isinstance(nodes[0], SimpleString)
 
 
 def test_filter_with_wrong_number_of_parameters():
@@ -530,9 +543,12 @@ def test_filter_with_wrong_number_of_parameters():
 def test_filter_with_invalid_annotation():
     changer = Changer('a = 5')
 
+    class SomeClass:
+        pass
+
     with pytest.raises(TypeError, match=match('The type annotation for the first argument of the function must be descended from the libcst.CSTNode class (or be a libcst.CSTNode class if you want to set a filter for all nodes).')):
         @changer.filter
-        def filter_func(node: str, context: Context):
+        def filter_func(node: SomeClass, context: Context):
             return True
 
 
@@ -553,7 +569,7 @@ def test_two_converters_for_same_node():
             whitespace_after=node.whitespace_after,
         )
 
-    assert [changer.apply_coordinate(coordinate) for coordinate in changer.iterate_coordinates()] == ['5 - 5', '5 * 5']
+    assert set(changer.apply_coordinate(coordinate) for coordinate in changer.iterate_coordinates()) == {'5 - 5', '5 * 5'}
 
 
 def test_use_collector_for_converter():
@@ -594,3 +610,39 @@ def test_use_collector_for_converter_and_filter():
     filters_value = True
 
     assert [changer.apply_coordinate(coordinate) for coordinate in changer.iterate_coordinates()] == ['a = 5 - 5']
+
+
+def test_union_with_csts():
+    changer = Changer('5 - 5 + 5')
+
+    @changer.converter
+    def some_converter(node: Union[Add, Subtract], context: Context):
+        return Multiply(
+            whitespace_before=node.whitespace_before,
+            whitespace_after=node.whitespace_after,
+        )
+
+    assert [changer.apply_coordinate(coordinate) for coordinate in changer.iterate_coordinates()] == ['5 * 5 + 5', '5 - 5 * 5']
+
+
+def test_union_with_union_with_csts():
+    changer = Changer('5 - 5 + 5')
+
+    @changer.converter
+    def some_converter(node: Union[Add, Union[Multiply, Subtract]], context: Context):
+        return Multiply(
+            whitespace_before=node.whitespace_before,
+            whitespace_after=node.whitespace_after,
+        )
+
+    assert set(changer.apply_coordinate(coordinate) for coordinate in changer.iterate_coordinates()) == {'5 * 5 + 5', '5 - 5 * 5'}
+
+
+def test_convert_plus_one():
+    changer = Changer('5 - 5 + 5')
+
+    @changer.converter
+    def convert_ints(node: int, context):
+        return node.with_changes(value=repr(node.evaluated_value + 1))
+
+    assert set(changer.apply_coordinate(coordinate) for coordinate in changer.iterate_coordinates()) == {'6 - 5 + 5', '5 - 6 + 5', '5 - 5 + 6'}
