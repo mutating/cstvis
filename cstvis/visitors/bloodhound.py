@@ -32,9 +32,9 @@ class Bloodhound(CSTVisitor):
             end_column=position.end.column,
         )
 
-        converters = self.nodes_mapping.get(type(node), []) + self.nodes_mapping.get(CSTNode, [])
+        converters = self.nodes_mapping.get(type(node), []) + self.nodes_mapping.get(CSTNode, [])  # type: ignore[type-abstract]
 
-        if converters:  # type: ignore[type-abstract]
+        if converters:
             filters = self.filters.get(type(node), []) + self.filters.get(CSTNode, [])  # type: ignore[type-abstract]
             context = Context(coordinate, self.comments.get(coordinate.start_line))
             if filters:
