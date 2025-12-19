@@ -19,7 +19,7 @@ def test_add_some_filter():
     collector = Collector()
 
     @collector.filter
-    def some_filter(node, context):
+    def some_filter(node, context):  # noqa: ARG001
         return True
 
     assert collector._filters == [some_filter]
@@ -29,7 +29,7 @@ def test_add_some_converter():
     collector = Collector()
 
     @collector.converter
-    def some_converter(node, context):
+    def some_converter(node, context):  # noqa: ARG001
         return node
 
     assert collector._converters == [some_converter]

@@ -1,13 +1,13 @@
 # ruff: noqa: ARG001
 
-from typing import Union, Any
+from typing import Any, Union
 
 import pytest
 from full_match import match
-from libcst import Add, Subtract, Multiply, SimpleString, CSTNode
+from libcst import Add, CSTNode, Multiply, SimpleString, Subtract
 from metacode import ParsedComment
 
-from cstvis import Changer, Context, Collector
+from cstvis import Changer, Collector, Context
 
 
 @pytest.mark.parametrize(
@@ -514,14 +514,11 @@ def test_convert_str():
     @changer.converter
     def converter_func(node: str, context: Context):
         nodes.append(node)
-        print('kek')
         return node
 
     for coordinate in changer.iterate_coordinates():
-        print('lol', coordinate)
         changer.apply_coordinate(coordinate)
 
-    print(nodes)
     assert len(nodes) == 1
     assert isinstance(nodes[0], SimpleString)
 
