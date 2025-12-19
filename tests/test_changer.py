@@ -523,6 +523,19 @@ def test_convert_str():
     assert isinstance(nodes[0], SimpleString)
 
 
+def test_convert_float():
+    changer = Changer('a = 5.0')
+
+    @changer.converter
+    def converter_func(node: float, context: Context):
+        return node.with_changes(value=repr(node.evaluated_value + 1))  # type: ignore[attr-defined]
+
+    for coordinate in changer.iterate_coordinates():
+        changer.apply_coordinate(coordinate)
+
+    assert [changer.apply_coordinate(coordinate) for coordinate in changer.iterate_coordinates()] == ['a = 6.0']
+
+
 def test_filter_with_wrong_number_of_parameters():
     changer = Changer('a = 5')
 
