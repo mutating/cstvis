@@ -15,7 +15,7 @@
 
 </details>
 
-![logo](docs/assets/logo_1.svg)
+![logo](https://raw.githubusercontent.com/mutating/cstvis/develop/docs/assets/logo_1.svg)
 
 A large number of source code tools (linters, formatters, and others) work with [CST](https://en.wikipedia.org/wiki/Parse_tree), a special representation of the source code that already has a tree shape (like [AST](https://en.wikipedia.org/wiki/Abstract_syntax_tree)), but still contains "extra" nodes such as spaces or comments. This library is a wrapper around such a tree, designed for convenient and iterative work with nodes: traversal and replacement.
 
