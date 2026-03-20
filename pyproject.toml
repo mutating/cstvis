@@ -4,12 +4,16 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cstvis"
-version = "0.0.3"
+version = "0.0.4"
 authors = [{ name = "Evgeniy Blinov", email = "zheni-b@yandex.ru" }]
 description = 'Incremental change of CST'
 readme = "README.md"
 requires-python = ">=3.8"
-dependencies = ["libcst>=1.1.0 ; python_version == '3.8'", "libcst>=1.8.6 ; python_version > '3.8'", 'metacode>=0.0.4']
+dependencies = [
+    'metacode>=0.0.6',
+    "libcst>=1.1.0 ; python_version == '3.8'",
+    "libcst>=1.8.6 ; python_version > '3.8'",
+]
 classifiers = [
     "Operating System :: OS Independent",
     'Operating System :: MacOS :: MacOS X',
@@ -48,5 +52,5 @@ lint.select = ["ERA001", "YTT", "ASYNC", "BLE", "B", "A", "COM", "INP", "PIE", "
 format.quote-style = "single"
 
 [project.urls]
-'Source' = 'https://github.com/pomponchik/cstvis'
-'Tracker' = 'https://github.com/pomponchik/cstvis/issues'
+'Source' = 'https://github.com/mutating/cstvis'
+'Tracker' = 'https://github.com/mutating/cstvis/issues'
