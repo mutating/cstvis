@@ -3,15 +3,15 @@
 
 [![Downloads](https://static.pepy.tech/badge/cstvis/month)](https://pepy.tech/project/cstvis)
 [![Downloads](https://static.pepy.tech/badge/cstvis)](https://pepy.tech/project/cstvis)
-[![Coverage Status](https://coveralls.io/repos/github/pomponchik/cstvis/badge.svg?branch=main)](https://coveralls.io/github/pomponchik/cstvis?branch=main)
-[![Lines of code](https://sloc.xyz/github/pomponchik/cstvis/?category=code)](https://github.com/boyter/scc/)
-[![Hits-of-Code](https://hitsofcode.com/github/pomponchik/cstvis?branch=main&label=Hits-of-Code&exclude=docs/)](https://hitsofcode.com/github/pomponchik/cstvis/view?branch=main)
-[![Test-Package](https://github.com/pomponchik/cstvis/actions/workflows/tests_and_coverage.yml/badge.svg)](https://github.com/pomponchik/cstvis/actions/workflows/tests_and_coverage.yml)
+[![Coverage Status](https://coveralls.io/repos/github/mutating/cstvis/badge.svg?branch=main)](https://coveralls.io/github/mutating/cstvis?branch=main)
+[![Lines of code](https://sloc.xyz/github/mutating/cstvis/?category=code)](https://github.com/boyter/scc/)
+[![Hits-of-Code](https://hitsofcode.com/github/mutating/cstvis?branch=main&label=Hits-of-Code&exclude=docs/)](https://hitsofcode.com/github/mutating/cstvis/view?branch=main)
+[![Test-Package](https://github.com/mutating/cstvis/actions/workflows/tests_and_coverage.yml/badge.svg)](https://github.com/mutating/cstvis/actions/workflows/tests_and_coverage.yml)
 [![Python versions](https://img.shields.io/pypi/pyversions/cstvis.svg)](https://pypi.python.org/pypi/cstvis)
 [![PyPI version](https://badge.fury.io/py/cstvis.svg)](https://badge.fury.io/py/cstvis)
 [![Checked with mypy](http://www.mypy-lang.org/static/mypy_badge.svg)](http://mypy-lang.org/)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
-[![DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/pomponchik/cstvis)
+[![DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/mutating/cstvis)
 
 </details>
 
@@ -116,4 +116,4 @@ So, now it's roughly clear how to use it. But what kind of `context` parameter d
 
 - `coordinate` with fields `start_line: int`, `start_column: int`, `end_line: int`, `end_column: int` and some others. This identifies where we are at in the code.
 - `comment` - a comment line, if there is such a comment in the first line of this node, without a `#` at the beginning, or `None` if there is no comment.
-- `get_metacodes(key: Union[str, List[str]]) -> List[ParsedComment]` - a method that returns a list of parsed comments in [metacode format](https://github.com/pomponchik/metacode) related to this line of code.
+- `get_metacodes(key: Union[str, List[str]]) -> List[ParsedComment]` - a method that returns a list of parsed comments in [metacode format](https://github.com/mutating/metacode) related to this line of code.

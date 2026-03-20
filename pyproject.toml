@@ -49,5 +49,5 @@ lint.select = ["ERA001", "YTT", "ASYNC", "BLE", "B", "A", "COM", "INP", "PIE", "
 format.quote-style = "single"
 
 [project.urls]
-'Source' = 'https://github.com/pomponchik/cstvis'
-'Tracker' = 'https://github.com/pomponchik/cstvis/issues'
+'Source' = 'https://github.com/mutating/cstvis'
+'Tracker' = 'https://github.com/mutating/cstvis/issues'
