@@ -9,7 +9,11 @@ authors = [{ name = "Evgeniy Blinov", email = "zheni-b@yandex.ru" }]
 description = 'Incremental change of CST'
 readme = "README.md"
 requires-python = ">=3.8"
-dependencies = ["libcst>=1.1.0 ; python_version == '3.8'", "libcst>=1.8.6 ; python_version > '3.8'", 'metacode>=0.0.4']
+dependencies = [
+    "libcst>=1.1.0 ; python_version == '3.8'",
+    "libcst>=1.8.6 ; python_version > '3.8'",
+    'metacode>=0.0.4',
+]
 classifiers = [
     "Operating System :: OS Independent",
     'Operating System :: MacOS :: MacOS X',
