@@ -17,7 +17,7 @@
 
 ![logo](https://raw.githubusercontent.com/mutating/cstvis/develop/docs/assets/logo_1.svg)
 
-Many source code tools (linters, formatters, and others) work with [CST](https://en.wikipedia.org/wiki/Parse_tree), a tree-structured representation of source code (like [AST](https://en.wikipedia.org/wiki/Abstract_syntax_tree), but still retains nodes such as whitespace and comments). This library is a wrapper around that kind of tree, designed for convenient iterative traversal and replacement of nodes.
+Many source code tools (linters, formatters, and others) work with [CST](https://en.wikipedia.org/wiki/Parse_tree), a tree-structured representation of source code (like [AST](https://en.wikipedia.org/wiki/Abstract_syntax_tree), but it also retains nodes such as whitespace and comments). This library is a wrapper around such trees, designed for convenient iterative traversal and replacement of nodes.
 
 
 ## Table of Contents
@@ -39,12 +39,12 @@ You can also use [`instld`](https://github.com/pomponchik/instld) to quickly try
 
 ## Usage
 
-This library is a wrapper around the [`libcst`](https://pypi.org/project/libcst/) library. 
+This package is built on top of [`libcst`](https://pypi.org/project/libcst/).
 
 The basic workflow is very simple:
 
 - Create an object of the `Changer` class.
-- Register converter functions using the decorator. Each function converts one `CST` node type into another, it takes a node object as its first argument, and that argument must have a type annotation that tells the system which node types the converter should be applied to.
+- Register converter functions with the `@<changer object>.converter` decorator. Each function converts one `CST` node type into another. It takes a node object as its first argument, and that argument must have a type annotation that tells the system which node types the converter should be applied to.
 - If needed, register filters to prevent changes to certain nodes.
 - Iterate over individual changes and apply them as needed.
 
@@ -85,7 +85,7 @@ for x in changer.iterate_coordinates():
 
 The key part of this example is the last two lines, where we iterate over the coordinates. What does that mean? The fact is that any code change made by this library happens in two stages: identify the coordinates of the change and then apply it. This separation makes it possible to distribute the work across multiple threads or even multiple machines. However, this design also has limitations. If you apply one coordinate change, the resulting code will differ from the original and the remaining coordinates will no longer be valid. You can only apply one change at a time.
 
-A filter is a special function with the same signature as a converter, registered with the `@<changer object>.filter` decorator. It decides whether a specific `CST` node should be changed, and return `True` if yes, or `False` if no. The filter applies to all nodes if the node parameter has no type annotation, or if the parameter is annotated as [`Any`](https://docs.python.org/3/library/typing.html#typing.Any) or [`CSTNode`](https://libcst.readthedocs.io/en/latest/nodes.html#libcst.CSTNode). If you specify a node type in the annotation, the filter will be applied only to nodes of that type. Any other annotations are not allowed.
+A filter is a special function with the same signature as a converter, registered with the `@<changer object>.filter` decorator. It decides whether a specific `CST` node should be changed, and returns `True` if yes, or `False` if no. The filter applies to all nodes if the node parameter has no type annotation, or if the parameter is annotated as [`Any`](https://docs.python.org/3/library/typing.html#typing.Any) or [`CSTNode`](https://libcst.readthedocs.io/en/latest/nodes.html#libcst.CSTNode). If you specify a node type in the annotation, the filter will be applied only to nodes of that type. Any other annotations are not allowed.
 
 Let's look at another example (part of the code is omitted):
 
