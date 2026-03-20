@@ -17,10 +17,10 @@
 
 ![logo](https://raw.githubusercontent.com/mutating/cstvis/develop/docs/assets/logo_1.svg)
 
-A large number of source code tools (linters, formatters, and others) work with [CST](https://en.wikipedia.org/wiki/Parse_tree), a special representation of the source code that already has a tree shape (like [AST](https://en.wikipedia.org/wiki/Abstract_syntax_tree)), but still contains "extra" nodes such as spaces or comments. This library is a wrapper around such a tree, designed for convenient and iterative work with nodes: traversal and replacement.
+Many source code tools (linters, formatters, and others) work with [CST](https://en.wikipedia.org/wiki/Parse_tree), a tree-structured representation of source code (like [AST](https://en.wikipedia.org/wiki/Abstract_syntax_tree), but still retains nodes such as whitespace and comments). This library is a wrapper around that kind of tree, designed for convenient iterative traversal and replacement of nodes.
 
 
-## Table of contents
+## Table of Contents
 
 - [**Installation**](#installation)
 - [**Usage**](#usage)
@@ -28,25 +28,25 @@ A large number of source code tools (linters, formatters, and others) work with 
 
 ## Installation
 
-Install it:
+You can install [`cstvis`](https://pypi.org/project/cstvis) with `pip`:
 
 ```bash
 pip install cstvis
 ```
 
-You can also quickly try out this and other packages without having to install using [instld](https://github.com/pomponchik/instld).
+You can also use [`instld`](https://github.com/pomponchik/instld) to quickly try this package and others without installing them.
 
 
 ## Usage
 
 This library is a wrapper around the [`libcst`](https://pypi.org/project/libcst/) library. 
 
-The flow of work is very simple:
+The basic workflow is very simple:
 
 - Create an object of the `Changer` class.
-- Register converter functions that will convert some `CST` nodes to others, using the decorator. Each such function takes a node object as the first argument, and it must be accompanied by a type annotation. It is based on the annotation that the system will understand which nodes it needs to be applied to and which ones it does not.
-- If necessary, also register filters, which are special functions that can prevent the system from changing certain nodes.
-- Iterate over atomic changes and apply them if necessary.
+- Register converter functions using the decorator. Each function converts one `CST` node type into another, it takes a node object as its first argument, and that argument must have a type annotation that tells the system which node types the converter should be applied to.
+- If needed, register filters to prevent changes to certain nodes.
+- Iterate over individual changes and apply them as needed.
 
 Let me show you a simple example:
 
@@ -83,9 +83,9 @@ for x in changer.iterate_coordinates():
 #> c = b - a # kek
 ```
 
-The key part of this example is the last two lines where the coordinates are iterated. What does it mean? The fact is that any change to the code that this library makes occurs in 2 stages: outline the coordinates of the change and make the change. Due to this separation, it becomes possible, for example, to divide this work between several threads or even several computers. However, this scheme also limits us. If you apply one coordinate change, the resulting code will differ from the original one and subsequent coordinates will no longer be possible to apply. You can only apply one change at a time.
+The key part of this example is the last two lines, where we iterate over the coordinates. What does that mean? The fact is that any code change made by this library happens in two stages: identify the coordinates of the change and then apply it. This separation makes it possible to distribute the work across multiple threads or even multiple machines. However, this design also has limitations. If you apply one coordinate change, the resulting code will differ from the original and the remaining coordinates will no longer be valid. You can only apply one change at a time.
 
-A filter is a special function with the same signature as a converter, which we mark with the `@filter` decorator. This should decide whether to change a specific `CST` node or not, and return `True` if yes, or `False` if no. The filter is applied to all nodes if the node parameter does not have a type annotation, or if [Any](https://docs.python.org/3/library/typing.html#typing.Any) / [CSTNode](https://libcst.readthedocs.io/en/latest/nodes.html#libcst.CSTNode) annotation is used. If you specify a specific type of node in the annotation, the filter will be applied only to them. Any other annotations are not allowed.
+A filter is a special function with the same signature as a converter, registered with the `@<changer object>.filter` decorator. It decides whether a specific `CST` node should be changed, and return `True` if yes, or `False` if no. The filter applies to all nodes if the node parameter has no type annotation, or if the parameter is annotated as [`Any`](https://docs.python.org/3/library/typing.html#typing.Any) or [`CSTNode`](https://libcst.readthedocs.io/en/latest/nodes.html#libcst.CSTNode). If you specify a node type in the annotation, the filter will be applied only to nodes of that type. Any other annotations are not allowed.
 
 Let's look at another example (part of the code is omitted):
 
@@ -110,10 +110,10 @@ for x in changer.iterate_coordinates():
 #> c = b + a # kek
 ```
 
-You see? Now, during the iteration, we got only the first version of possible changes, the rest are automatically filtered out because the filter function told us to do so.
+You see? Now the iteration yields only the first possible change, the rest are filtered out automatically because the filter returns `False` for them.
 
-So, now it's roughly clear how to use it. But what kind of `context` parameter do we see in converters and filters? It has 2 fields and 1 interesting method:
+At this point, the basic usage should be clear. But what is the `context` parameter passed to converters and filters? It has two fields and one useful method:
 
-- `coordinate` with fields `start_line: int`, `start_column: int`, `end_line: int`, `end_column: int` and some others. This identifies where we are at in the code.
-- `comment` - a comment line, if there is such a comment in the first line of this node, without a `#` at the beginning, or `None` if there is no comment.
-- `get_metacodes(key: Union[str, List[str]]) -> List[ParsedComment]` - a method that returns a list of parsed comments in [metacode format](https://github.com/mutating/metacode) related to this line of code.
+- `coordinate` with fields `start_line: int`, `start_column: int`, `end_line: int`, `end_column: int` and some others. This identifies the current location in the code.
+- `comment` - the comment on the first line of the node, if there is one, without the leading `#`, or `None` if there is no comment.
+- `get_metacodes(key: Union[str, List[str]]) -> List[ParsedComment]` - a method that returns a list of parsed comments in [metacode format](https://github.com/mutating/metacode) associated with this line of code.
