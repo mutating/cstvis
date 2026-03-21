@@ -43,7 +43,7 @@ class Changer:
 
     def filter(self, function: Optional[Union[Callable[[CSTNode], bool], Callable[[CSTNode, Context], bool]]] = None) -> Union[Union[Callable[[CSTNode], bool], Callable[[CSTNode, Context], bool]], Callable[[Union[Callable[[CSTNode], bool], Callable[[CSTNode, Context], bool]]], Union[Callable[[CSTNode], bool], Callable[[CSTNode, Context], bool]]]]:
         if function is None:
-            return partial(self.filter)
+            return partial(self.filter)  # type: ignore[return-value]
 
         wrapper = CallableWrapper(function)
 
@@ -54,7 +54,7 @@ class Changer:
 
     def converter(self, function: Optional[Union[Callable[[CSTNode], CSTNode], Callable[[CSTNode, Context], CSTNode]]] = None) -> Union[Union[Callable[[CSTNode], CSTNode], Callable[[CSTNode, Context], CSTNode]], Callable[[Union[Callable[[CSTNode], CSTNode], Callable[[CSTNode, Context], CSTNode]]], Union[Callable[[CSTNode], CSTNode], Callable[[CSTNode, Context], CSTNode]]]]:
         if function is None:
-            return partial(self.converter)
+            return partial(self.converter)  # type: ignore[return-value]
 
         wrapper = CallableWrapper(function)
 
