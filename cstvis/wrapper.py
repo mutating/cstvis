@@ -22,7 +22,6 @@ class CallableWrapper(Generic[FilterOrConverterReturnValue]):
             raise SignatureMismatchError('A function that takes a CST node and a context is expected.')
 
         self.function = function
-        wraps(function)(self)
 
     def __call__(self, node: CSTNode, context: Context) -> FilterOrConverterReturnValue:
         return self.function(node, context)

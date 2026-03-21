@@ -40,9 +40,9 @@ class Changer:
 
         if collector is not None:
             for collected_filter in collector._filters:
-                self.filter(collected_filter)
+                self.filter(collected_filter.function)
             for collected_converter in collector._converters:
-                self.converter(collected_converter)
+                self.converter(collected_converter.function)
 
     @cached_property
     def _comments_by_lines(self) -> Dict[int, str]:
