@@ -22,7 +22,7 @@ def test_add_some_filter():
     def some_filter(node, context):  # noqa: ARG001
         return True
 
-    assert collector._filters == [some_filter]
+    assert [x.function for x in collector._filters] == [some_filter]
 
 
 def test_add_some_converter():
@@ -32,4 +32,4 @@ def test_add_some_converter():
     def some_converter(node, context):  # noqa: ARG001
         return node
 
-    assert collector._converters == [some_converter]
+    assert [x.function for x in collector._converters] == [some_converter]
