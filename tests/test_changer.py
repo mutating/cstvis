@@ -680,3 +680,21 @@ def test_if_node_is_not_exist_nothing_changed():
         return node
 
     assert [changer.apply_coordinate(coordinate) for coordinate in changer.iterate_coordinates()] == []
+
+
+def test_get_function_id_from_itself():
+    changer = Changer('5 - 5 + 5')
+
+    @changer.converter
+    def do_something(node: float, context):
+        return node
+
+    @changer.filter
+    def filter_something(node: float, context):
+        return False
+
+    converter = list(changer.converters_by_types.values())[0][0]
+    filter = list(changer.filters_by_types.values())[0][0]
+
+    assert converter.get_function_id() == 'tests.test_changer:do_something:688'
+    assert filter.get_function_id() == 'tests.test_changer:filter_something:692'
