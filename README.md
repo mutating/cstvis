@@ -25,7 +25,7 @@ This package is built on top of [`libcst`](https://pypi.org/project/libcst/).
 ## Table of Contents
 
 - [**Installation**](#installation)
-- [**Basic usage**](#basic-usage)
+- [**Changing nodes**](#changing-nodes)
 - [**Filters**](#filters)
 - [**Context**](#context)
 
@@ -41,7 +41,7 @@ pip install cstvis
 You can also use [`instld`](https://github.com/pomponchik/instld) to quickly try this package and others without installing them.
 
 
-## Basic usage
+## Changing nodes
 
 The basic workflow is very simple:
 
