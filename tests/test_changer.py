@@ -955,3 +955,89 @@ def test_wrong_converter_and_wrong_filter(unfold):
         @unfold(changer.filter)
         def filter_something_2(a, b, c):
             return False
+
+
+def test_pass_meta_dict_to_converter():
+    bread_crumbs = []
+    changer = Changer('5 - 5 + 5')
+    meta = {'key': 123}
+
+    @changer.converter(meta=meta)
+    def some_converter(node: Add, context: Context):
+        bread_crumbs.append(context.meta)
+        return Multiply(
+            whitespace_before=node.whitespace_before,
+            whitespace_after=node.whitespace_after,
+        )
+
+    [changer.apply_coordinate(coordinate) for coordinate in changer.iterate_coordinates()]
+
+    assert bread_crumbs == [meta]
+    assert bread_crumbs[0] is not meta
+
+
+def test_pass_meta_dict_to_filter(unfold):
+    bread_crumbs = []
+    changer = Changer('5 - 5 + 5')
+    meta = {'key': 123}
+
+    @unfold(changer.converter)
+    def some_converter(node: Add):
+        return Multiply(
+            whitespace_before=node.whitespace_before,
+            whitespace_after=node.whitespace_after,
+        )
+
+    @changer.filter(meta=meta)
+    def filter_something(node: Add, context: Context):
+        bread_crumbs.append(context.meta)
+        return False
+
+    [changer.apply_coordinate(coordinate) for coordinate in changer.iterate_coordinates()]
+
+    assert bread_crumbs == [meta]
+    assert bread_crumbs[0] is not meta
+
+
+def test_pass_meta_dict_to_converter_throw_collector():
+    bread_crumbs = []
+    collector = Collector()
+    meta = {'key': 123}
+
+    @collector.converter(meta=meta)
+    def some_converter(node: Add, context: Context):
+        bread_crumbs.append(context.meta)
+        return Multiply(
+            whitespace_before=node.whitespace_before,
+            whitespace_after=node.whitespace_after,
+        )
+
+    changer = Changer('5 - 5 + 5', collector=collector)
+    [changer.apply_coordinate(coordinate) for coordinate in changer.iterate_coordinates()]
+
+    assert bread_crumbs == [meta]
+    assert bread_crumbs[0] is not meta
+
+
+def test_pass_meta_dict_to_filter_throw_collector(unfold):
+    bread_crumbs = []
+    collector = Collector()
+    meta = {'key': 123}
+
+    @unfold(collector.converter)
+    def some_converter(node: Add):
+        return Multiply(
+            whitespace_before=node.whitespace_before,
+            whitespace_after=node.whitespace_after,
+        )
+
+    @collector.filter(meta=meta)
+    def filter_something(node: Add, context: Context):
+        bread_crumbs.append(context.meta)
+        return False
+
+    changer = Changer('5 - 5 + 5', collector=collector)
+    [changer.apply_coordinate(coordinate) for coordinate in changer.iterate_coordinates()]
+
+    assert bread_crumbs == [meta]
+    assert bread_crumbs[0] is not meta
