@@ -1,16 +1,14 @@
 from collections import defaultdict
-from functools import cached_property, wraps
+from functools import cached_property
 from inspect import _empty, isclass, signature
 from typing import (
     Any,
     Callable,
     Dict,
     Generator,
-    Generic,
     List,
     Optional,
     Type,
-    TypeVar,
     Union,
     get_args,
     get_origin,
@@ -23,27 +21,13 @@ except ImportError:  # pragma: no cover
     from typing import Union as UnionType  # type: ignore[assignment, unused-ignore]
 
 from libcst import CSTNode, Float, Integer, SimpleString, metadata, parse_module
-from printo import repred
 
 from cstvis.collector import Collector
 from cstvis.dto import Context, Coordinate
 from cstvis.transformers.super_transformer import SuperTransformer
 from cstvis.visitors.bloodhound import Bloodhound
 from cstvis.visitors.comments_aggregator import CommentsAggregator
-
-FilterOrConverterReturnValue = TypeVar('FilterOrConverterReturnValue')
-
-@repred(prefer_positional=True)
-class CallableWrapper(Generic[FilterOrConverterReturnValue]):
-    def __init__(self, filter_or_converter: Callable[[CSTNode, Context], FilterOrConverterReturnValue]) -> None:
-        self.filter_or_converter = filter_or_converter
-        wraps(filter_or_converter)(self)
-
-    def __call__(self, node: CSTNode, context: Context) -> FilterOrConverterReturnValue:
-        return self.filter_or_converter(node, context)
-
-    def get_function_id(self) -> str:
-        return f'{self.filter_or_converter.__module__}:{self.filter_or_converter.__name__}:{self.filter_or_converter.__code__.co_firstlineno}'
+from cstvis.wrapper import CallableWrapper
 
 
 class Changer:
