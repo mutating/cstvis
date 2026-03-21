@@ -47,7 +47,7 @@ The basic workflow is very simple:
 
 - Create an object of the `Changer` class.
 - Register converter functions with the `@<changer object>.converter` decorator. Each function converts one `CST` node type into another. It takes a node object as its first argument.
-- If needed, register filters to prevent changes to certain nodes.
+- If needed, register [filters](#filters) to prevent changes to certain nodes.
 - Iterate over individual changes and apply them as needed.
 
 Let me show you a simple example:
