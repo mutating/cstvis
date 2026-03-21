@@ -6,12 +6,12 @@ from typing import (
     Callable,
     Dict,
     Generator,
+    Generic,
     List,
     Optional,
     Type,
-    Union,
     TypeVar,
-    Generic,
+    Union,
     get_args,
     get_origin,
 )
@@ -30,7 +30,6 @@ from cstvis.dto import Context, Coordinate
 from cstvis.transformers.super_transformer import SuperTransformer
 from cstvis.visitors.bloodhound import Bloodhound
 from cstvis.visitors.comments_aggregator import CommentsAggregator
-
 
 FilterOrConverterReturnValue = TypeVar('FilterOrConverterReturnValue')
 

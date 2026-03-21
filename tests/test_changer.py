@@ -693,8 +693,8 @@ def test_get_function_id_from_itself():
     def filter_something(node: float, context):
         return False
 
-    converter = list(changer.converters_by_types.values())[0][0]
-    filter = list(changer.filters_by_types.values())[0][0]
+    converter = list(changer.converters_by_types.values())[0][0]  # noqa: RUF015
+    filter = list(changer.filters_by_types.values())[0][0]  # noqa: RUF015, A001
 
     assert converter.get_function_id() == 'tests.test_changer:do_something:688'
     assert filter.get_function_id() == 'tests.test_changer:filter_something:692'
