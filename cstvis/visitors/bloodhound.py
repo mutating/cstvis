@@ -1,9 +1,10 @@
 from copy import deepcopy
-from typing import Callable, Dict, List, Type
+from typing import Dict, List, Type
 
 from libcst import CSTNode, CSTVisitor, metadata
 
 from cstvis.dto import Context, Coordinate
+from cstvis.wrapper import CallableWrapper
 
 
 class Bloodhound(CSTVisitor):
@@ -11,9 +12,9 @@ class Bloodhound(CSTVisitor):
 
     def __init__(
         self,
-        nodes_mapping: Dict[Type[CSTNode], List[Callable[[CSTNode, Context], CSTNode]]],
+        nodes_mapping: Dict[Type[CSTNode], List[CallableWrapper[CSTNode]]],
         comments: Dict[int, str],
-        filters: Dict[Type[CSTNode], List[Callable[[CSTNode, Context], bool]]],
+        filters: Dict[Type[CSTNode], List[CallableWrapper[bool]]],
     ) -> None:
         self.coordinates: List[Coordinate] = []
         self.nodes_mapping = nodes_mapping

@@ -10,6 +10,7 @@ from libcst.matchers import (
 )
 
 from cstvis.dto import Context, Coordinate
+from cstvis.wrapper import CallableWrapper
 
 
 def get_all_matcher_nodes() -> List[BaseMatcherNode]:
@@ -38,7 +39,7 @@ class SuperTransformer(MatcherDecoratableTransformer):
     def __init__(
         self,
         target_coordinate: Coordinate,
-        nodes_mapping: Dict[Type[CSTNode], List[Callable[[CSTNode, Context], CSTNode]]],
+        nodes_mapping: Dict[Type[CSTNode], List[CallableWrapper[CSTNode]]],
         comments: Dict[int, str],
         nodes_ids: Set[int],
     ):

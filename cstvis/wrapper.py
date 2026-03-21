@@ -12,7 +12,7 @@ from cstvis.dto import Context
 
 FilterOrConverterReturnValue = TypeVar('FilterOrConverterReturnValue')
 
-@repred(prefer_positional=True)
+@repred(prefer_positional=True)  # type: ignore[call-overload]
 class CallableWrapper(Generic[FilterOrConverterReturnValue]):
     def __init__(self, function: Callable[[CSTNode, Context], FilterOrConverterReturnValue]) -> None:
         self.function = function
