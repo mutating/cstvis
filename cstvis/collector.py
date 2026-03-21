@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from functools import partial
-from typing import Callable, List, Optional, Union, Dict, Any
+from typing import Any, Callable, Dict, List, Optional, Union
 
 from libcst import CSTNode
 

@@ -31,9 +31,9 @@ class Changer:
 
         if collector is not None:
             for collected_filter in collector._filters:
-                self.filter(meta=collected_filter.meta)(collected_filter.function)
+                self.filter(meta=collected_filter.meta)(collected_filter.function)  # type: ignore[call-arg, arg-type]
             for collected_converter in collector._converters:
-                self.converter(meta=collected_converter.meta)(collected_converter.function)
+                self.converter(meta=collected_converter.meta)(collected_converter.function)  # type: ignore[call-arg, arg-type]
 
     @cached_property
     def _comments_by_lines(self) -> Dict[int, str]:
