@@ -23,7 +23,7 @@ Many source code tools (linters, formatters, and others) work with [CST](https:/
 ## Table of Contents
 
 - [**Installation**](#installation)
-- [**Usage**](#usage)
+- [**Basic usage**](#basic-usage)
 
 
 ## Installation
@@ -37,7 +37,7 @@ pip install cstvis
 You can also use [`instld`](https://github.com/pomponchik/instld) to quickly try this package and others without installing them.
 
 
-## Usage
+## Basic usage
 
 This package is built on top of [`libcst`](https://pypi.org/project/libcst/).
 
