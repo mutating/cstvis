@@ -46,7 +46,7 @@ You can also use [`instld`](https://github.com/pomponchik/instld) to quickly try
 The basic workflow is very simple:
 
 - Create an object of the `Changer` class.
-- Register converter functions with the `@<changer object>.converter` decorator. Each function converts one `CST` node type into another. It takes a node object as its first argument, and that argument must have a type annotation that tells the system which node types the converter should be applied to.
+- Register converter functions with the `@<changer object>.converter` decorator. Each function converts one `CST` node type into another. It takes a node object as its first argument.
 - If needed, register filters to prevent changes to certain nodes.
 - Iterate over individual changes and apply them as needed.
 
@@ -85,12 +85,16 @@ for x in changer.iterate_coordinates():
 #> c = b - a # kek
 ```
 
+As you can see in the example, the converter function takes an argument with a type hint. You don’t need to write type-checking if statements because the system determines which node types to convert based on this hint. You can omit the annotation entirely, specify [`Any`](https://docs.python.org/3/library/typing.html#the-any-type), or specify [`libcst.CSTNode`](https://libcst.readthedocs.io/en/latest/nodes.html#libcst.CSTNode), in which case the converter will be applied to all nodes. If you specify a more specific type, such as [`libcst.Add`](https://libcst.readthedocs.io/en/latest/nodes.html#libcst.Add), the converter will be applied only to those nodes. You can also specify multiple nodes using the | syntax or Union. Finally, several shortcuts are supported: `str` -> [`libcst.SimpleString`](https://libcst.readthedocs.io/en/latest/nodes.html#libcst.SimpleString), `int` -> [`libcst.Integer`](https://libcst.readthedocs.io/en/latest/nodes.html#libcst.Integer), and `float` -> [`libcst.Float`](https://libcst.readthedocs.io/en/latest/nodes.html#libcst.Float).
+
 The key part of this example is the last two lines, where we iterate over the coordinates. What does that mean? The fact is that any code change made by this library happens in two stages: identify the coordinates of the change and then apply it. This separation makes it possible to distribute the work across multiple threads or even multiple machines. However, this design also has limitations. If you apply one coordinate change, the resulting code will differ from the original and the remaining coordinates will no longer be valid. You can only apply one change at a time.
 
 
 ## Filters
 
-A filter is a special function with the same signature as a converter, registered with the `@<changer object>.filter` decorator. It decides whether a specific `CST` node should be changed, and returns `True` if yes, or `False` if no. The filter applies to all nodes if the node parameter has no type annotation, or if the parameter is annotated as [`Any`](https://docs.python.org/3/library/typing.html#typing.Any) or [`CSTNode`](https://libcst.readthedocs.io/en/latest/nodes.html#libcst.CSTNode). If you specify a node type in the annotation, the filter will be applied only to nodes of that type. Any other annotations are not allowed.
+ with the same signature as a converter
+
+A filter is a special function, registered with the `@<changer object>.filter` decorator. It decides whether a specific `CST` node should be changed, and returns `True` if yes, or `False` if no. The filter applies to all nodes if the node parameter has no type annotation, or if the parameter is annotated as [`Any`](https://docs.python.org/3/library/typing.html#typing.Any) or [`CSTNode`](https://libcst.readthedocs.io/en/latest/nodes.html#libcst.CSTNode). If you specify a node type in the annotation, the filter will be applied only to nodes of that type. Any other annotations are not allowed.
 
 Let's look at another example (part of the code is omitted):
 
