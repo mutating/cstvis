@@ -7,6 +7,7 @@ from typing import (
     List,
     Optional,
     Type,
+    Union,
 )
 
 from libcst import CSTNode, metadata, parse_module
@@ -40,7 +41,7 @@ class Changer:
         wrapper.visit(aggregator)
         return aggregator.comments
 
-    def filter(self, function: Callable[[CSTNode, Context], bool]) -> Callable[[CSTNode, Context], bool]:
+    def filter(self, function: Union[Callable[[CSTNode], bool], Callable[[CSTNode, Context], bool]]) -> Union[Callable[[CSTNode], bool], Callable[[CSTNode, Context], bool]]:
         wrapper = CallableWrapper(function)
 
         for annotation in wrapper.first_node_annotations:
@@ -48,7 +49,7 @@ class Changer:
 
         return function
 
-    def converter(self, function: Callable[[CSTNode, Context], CSTNode]) -> Callable[[CSTNode, Context], CSTNode]:
+    def converter(self, function: Union[Callable[[CSTNode], CSTNode], Callable[[CSTNode, Context], CSTNode]]) -> Union[Callable[[CSTNode], CSTNode], Callable[[CSTNode, Context], CSTNode]]:
         wrapper = CallableWrapper(function)
 
         for annotation in wrapper.first_node_annotations:
