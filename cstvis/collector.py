@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from functools import partial
-from typing import Callable, List, Optional, Union
+from typing import Callable, List, Optional, Union, Dict, Any
 
 from libcst import CSTNode
 
@@ -13,16 +13,16 @@ class Collector:
     _filters: List[CallableWrapper[bool]] = field(default_factory=list)
     _converters: List[CallableWrapper[CSTNode]] = field(default_factory=list)
 
-    def filter(self, function: Optional[Union[Callable[[CSTNode], bool], Callable[[CSTNode, Context], bool]]] = None) -> Union[Union[Callable[[CSTNode], bool], Callable[[CSTNode, Context], bool]], Callable[[Union[Callable[[CSTNode], bool], Callable[[CSTNode, Context], bool]]], Union[Callable[[CSTNode], bool], Callable[[CSTNode, Context], bool]]]]:
+    def filter(self, function: Optional[Union[Callable[[CSTNode], bool], Callable[[CSTNode, Context], bool]]] = None, meta: Optional[Dict[str, Any]] = None) -> Union[Union[Callable[[CSTNode], bool], Callable[[CSTNode, Context], bool]], Callable[[Union[Callable[[CSTNode], bool], Callable[[CSTNode, Context], bool]]], Union[Callable[[CSTNode], bool], Callable[[CSTNode, Context], bool]]]]:
         if function is None:
-            return partial(self.filter)  # type: ignore[return-value]
+            return partial(self.filter, meta=meta)  # type: ignore[return-value]
 
-        self._filters.append(CallableWrapper(function))
+        self._filters.append(CallableWrapper(function, meta=meta))
         return function
 
-    def converter(self, function: Optional[Union[Callable[[CSTNode], CSTNode], Callable[[CSTNode, Context], CSTNode]]] = None) -> Union[Union[Callable[[CSTNode], CSTNode], Callable[[CSTNode, Context], CSTNode]], Callable[[Union[Callable[[CSTNode], CSTNode], Callable[[CSTNode, Context], CSTNode]]], Union[Callable[[CSTNode], CSTNode], Callable[[CSTNode, Context], CSTNode]]]]:
+    def converter(self, function: Optional[Union[Callable[[CSTNode], CSTNode], Callable[[CSTNode, Context], CSTNode]]] = None, meta: Optional[Dict[str, Any]] = None) -> Union[Union[Callable[[CSTNode], CSTNode], Callable[[CSTNode, Context], CSTNode]], Callable[[Union[Callable[[CSTNode], CSTNode], Callable[[CSTNode, Context], CSTNode]]], Union[Callable[[CSTNode], CSTNode], Callable[[CSTNode, Context], CSTNode]]]]:
         if function is None:
-            return partial(self.converter)  # type: ignore[return-value]
+            return partial(self.converter, meta=meta)  # type: ignore[return-value]
 
-        self._converters.append(CallableWrapper(function))
+        self._converters.append(CallableWrapper(function, meta=meta))
         return function
