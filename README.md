@@ -19,7 +19,7 @@
 
 Many source code tools (linters, formatters, and others) work with [CST](https://en.wikipedia.org/wiki/Parse_tree), a tree-structured representation of source code (like [AST](https://en.wikipedia.org/wiki/Abstract_syntax_tree), but it also retains nodes such as whitespace and comments). This library is a wrapper around such trees, designed for convenient iterative traversal and replacement of nodes.
 
-This package is built on top of [`libcst`](https://pypi.org/project/libcst/).
+It is built on top of [`libcst`](https://pypi.org/project/libcst/).
 
 
 ## Table of Contents
