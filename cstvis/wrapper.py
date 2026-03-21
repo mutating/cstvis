@@ -1,8 +1,10 @@
 from typing import (
     Any,
     Callable,
+    Dict,
     Generic,
     List,
+    Optional,
     Type,
     TypeVar,
     Union,
@@ -31,11 +33,12 @@ FilterOrConverterReturnValue = TypeVar('FilterOrConverterReturnValue')
 class CallableWrapper(Generic[FilterOrConverterReturnValue]):
     matcher = PossibleCallMatcher('.') + PossibleCallMatcher('..')
 
-    def __init__(self, function: Union[Callable[[CSTNode], FilterOrConverterReturnValue], Callable[[CSTNode, Context], FilterOrConverterReturnValue]]) -> None:
+    def __init__(self, function: Union[Callable[[CSTNode], FilterOrConverterReturnValue], Callable[[CSTNode, Context], FilterOrConverterReturnValue]], meta: Optional[Dict[str, Any]] = None) -> None:
         if not self.matcher.match(function):
             raise SignatureMismatchError('A function that takes a CST node and a context is expected.')
 
         self.function = function
+        self.meta = meta
 
     def __call__(self, node: CSTNode, context: Context) -> FilterOrConverterReturnValue:
         if PossibleCallMatcher('.').match(self.function):

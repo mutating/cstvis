@@ -1,6 +1,7 @@
 from collections import defaultdict
 from functools import cached_property, partial
 from typing import (
+    Any,
     Callable,
     Dict,
     Generator,
@@ -41,22 +42,22 @@ class Changer:
         wrapper.visit(aggregator)
         return aggregator.comments
 
-    def filter(self, function: Optional[Union[Callable[[CSTNode], bool], Callable[[CSTNode, Context], bool]]] = None) -> Union[Union[Callable[[CSTNode], bool], Callable[[CSTNode, Context], bool]], Callable[[Union[Callable[[CSTNode], bool], Callable[[CSTNode, Context], bool]]], Union[Callable[[CSTNode], bool], Callable[[CSTNode, Context], bool]]]]:
+    def filter(self, function: Optional[Union[Callable[[CSTNode], bool], Callable[[CSTNode, Context], bool]]] = None, meta: Optional[Dict[str, Any]] = None) -> Union[Union[Callable[[CSTNode], bool], Callable[[CSTNode, Context], bool]], Callable[[Union[Callable[[CSTNode], bool], Callable[[CSTNode, Context], bool]]], Union[Callable[[CSTNode], bool], Callable[[CSTNode, Context], bool]]]]:
         if function is None:
-            return partial(self.filter)  # type: ignore[return-value]
+            return partial(self.filter, meta=meta)  # type: ignore[return-value]
 
-        wrapper = CallableWrapper(function)
+        wrapper = CallableWrapper(function, meta=meta)
 
         for annotation in wrapper.first_node_annotations:
             self.filters_by_types[annotation].append(wrapper)
 
         return function
 
-    def converter(self, function: Optional[Union[Callable[[CSTNode], CSTNode], Callable[[CSTNode, Context], CSTNode]]] = None) -> Union[Union[Callable[[CSTNode], CSTNode], Callable[[CSTNode, Context], CSTNode]], Callable[[Union[Callable[[CSTNode], CSTNode], Callable[[CSTNode, Context], CSTNode]]], Union[Callable[[CSTNode], CSTNode], Callable[[CSTNode, Context], CSTNode]]]]:
+    def converter(self, function: Optional[Union[Callable[[CSTNode], CSTNode], Callable[[CSTNode, Context], CSTNode]]] = None, meta: Optional[Dict[str, Any]] = None) -> Union[Union[Callable[[CSTNode], CSTNode], Callable[[CSTNode, Context], CSTNode]], Callable[[Union[Callable[[CSTNode], CSTNode], Callable[[CSTNode, Context], CSTNode]]], Union[Callable[[CSTNode], CSTNode], Callable[[CSTNode, Context], CSTNode]]]]:
         if function is None:
-            return partial(self.converter)  # type: ignore[return-value]
+            return partial(self.converter, meta=meta)  # type: ignore[return-value]
 
-        wrapper = CallableWrapper(function)
+        wrapper = CallableWrapper(function, meta=meta)
 
         for annotation in wrapper.first_node_annotations:
             self.converters_by_types[annotation].append(CallableWrapper(function))
