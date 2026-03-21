@@ -54,7 +54,7 @@ Let me show you a simple example:
 
 ```python
 from libcst import Subtract, Add
-from cstvis import Changer, Context
+from cstvis import Changer
 from pathlib import Path
 
 # Content of the file:
@@ -122,7 +122,20 @@ You see? Now the iteration yields only the first possible change, the rest are f
 
 ## Context
 
-At this point, the basic usage should be clear. But what is the `context` parameter passed to converters and filters? It has two fields and one useful method:
+By default, each converter or filter takes a single argument: the node to which it is applied. However, you can also specify a second argument: the context. The system analyzes the signatures of your functions, detects that they expect a second argument, and passes it to them:
+
+```python
+from cstvis import Context
+
+@changer.converter
+def change_add(node: Add, context: Context):  # <- The function takes a second argument.
+    return Subtract(
+        whitespace_before=node.whitespace_before,
+        whitespace_after=node.whitespace_after,
+    )
+```
+
+The context object has two necessary fields and one useful method:
 
 - `coordinate` with fields `start_line: int`, `start_column: int`, `end_line: int`, `end_column: int` and some others. This identifies the current location in the code.
 - `comment` - the comment on the first line of the node, if there is one, without the leading `#`, or `None` if there is no comment.
