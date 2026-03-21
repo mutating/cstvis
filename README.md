@@ -92,9 +92,7 @@ The key part of this example is the last two lines, where we iterate over the co
 
 ## Filters
 
- with the same signature as a converter
-
-A filter is a special function, registered with the `@<changer object>.filter` decorator. It decides whether a specific `CST` node should be changed, and returns `True` if yes, or `False` if no. The filter applies to all nodes if the node parameter has no type annotation, or if the parameter is annotated as [`Any`](https://docs.python.org/3/library/typing.html#typing.Any) or [`CSTNode`](https://libcst.readthedocs.io/en/latest/nodes.html#libcst.CSTNode). If you specify a node type in the annotation, the filter will be applied only to nodes of that type. Any other annotations are not allowed.
+A filter is a special function, registered with the `@<changer object>.filter` decorator. It decides whether a specific `CST` node should be changed, and returns `True` if yes, or `False` if no. To determine the nodes to which the filter is applied, a type hint is used, which works in the same way as it does for converters.
 
 Let's look at another example (part of the code is omitted):
 
