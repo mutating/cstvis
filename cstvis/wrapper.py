@@ -7,6 +7,7 @@ from typing import (
 
 from libcst import CSTNode
 from printo import repred
+from sigmatch import PossibleCallMatcher, SignatureMismatchError
 
 from cstvis.dto import Context
 
@@ -14,7 +15,12 @@ FilterOrConverterReturnValue = TypeVar('FilterOrConverterReturnValue')
 
 @repred(prefer_positional=True)  # type: ignore[call-overload]
 class CallableWrapper(Generic[FilterOrConverterReturnValue]):
+    matcher = PossibleCallMatcher('..')
+
     def __init__(self, function: Callable[[CSTNode, Context], FilterOrConverterReturnValue]) -> None:
+        if not self.matcher.match(function):
+            raise SignatureMismatchError('A function that takes a CST node and a context is expected.')
+
         self.function = function
         wraps(function)(self)
 
