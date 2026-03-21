@@ -14,12 +14,12 @@ FilterOrConverterReturnValue = TypeVar('FilterOrConverterReturnValue')
 
 @repred(prefer_positional=True)
 class CallableWrapper(Generic[FilterOrConverterReturnValue]):
-    def __init__(self, filter_or_converter: Callable[[CSTNode, Context], FilterOrConverterReturnValue]) -> None:
-        self.filter_or_converter = filter_or_converter
-        wraps(filter_or_converter)(self)
+    def __init__(self, function: Callable[[CSTNode, Context], FilterOrConverterReturnValue]) -> None:
+        self.function = function
+        wraps(function)(self)
 
     def __call__(self, node: CSTNode, context: Context) -> FilterOrConverterReturnValue:
-        return self.filter_or_converter(node, context)
+        return self.function(node, context)
 
     def get_function_id(self) -> str:
-        return f'{self.filter_or_converter.__module__}:{self.filter_or_converter.__name__}:{self.filter_or_converter.__code__.co_firstlineno}'
+        return f'{self.function.__module__}:{self.function.__name__}:{self.function.__code__.co_firstlineno}'
