@@ -62,7 +62,7 @@ from pathlib import Path
 changer = Changer(Path('tests/some_code/simple_sum.py').read_text())
 
 @changer.converter
-def change_add(node: Add, context: Context):
+def change_add(node: Add):
     return Subtract(
         whitespace_before=node.whitespace_before,
         whitespace_after=node.whitespace_after,
@@ -72,12 +72,12 @@ for x in changer.iterate_coordinates():
     print(x)
     print(changer.apply_coordinate(x))
 
-#> Coordinate(file=None, class_name='Add', start_line=1, start_column=6, end_line=1, end_column=7)
+#> Coordinate(file=None, class_name='Add', start_line=1, start_column=6, end_line=1, end_column=7, converter_id='__main__:change_add:11')
 #> a = 4 - 5
 #> b = 15 - a
 #> c = b + a # kek
-#> 
-#> Coordinate(file=None, class_name='Add', start_line=3, start_column=6, end_line=3, end_column=7)
+#>
+#> Coordinate(file=None, class_name='Add', start_line=3, start_column=6, end_line=3, end_column=7, converter_id='__main__:change_add:11')
 #> a = 4 + 5
 #> b = 15 - a
 #> c = b - a # kek
@@ -93,7 +93,7 @@ Let's look at another example (part of the code is omitted):
 count_adds = 0
 
 @changer.filter
-def only_first(node: Add, context: Context) -> bool:
+def only_first(node: Add) -> bool:
     global count_adds
     
     count_adds += 1
@@ -104,7 +104,7 @@ for x in changer.iterate_coordinates():
     print(x)
     print(changer.apply_coordinate(x))
 
-#> Coordinate(file=None, class_name='Add', start_line=1, start_column=6, end_line=1, end_column=7)
+#> Coordinate(file=None, class_name='Add', start_line=1, start_column=6, end_line=1, end_column=7, converter_id='__main__:change_add:11')
 #> a = 4 - 5
 #> b = 15 - a
 #> c = b + a # kek
