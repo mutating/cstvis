@@ -10,7 +10,6 @@ from libcst.matchers import (
 )
 
 from cstvis.dto import Context, Coordinate
-from cstvis.utils.function_id import get_function_id
 
 
 def get_all_matcher_nodes() -> List[BaseMatcherNode]:

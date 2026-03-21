@@ -4,7 +4,6 @@ from typing import Callable, Dict, List, Type
 from libcst import CSTNode, CSTVisitor, metadata
 
 from cstvis.dto import Context, Coordinate
-from cstvis.utils.function_id import get_function_id
 
 
 class Bloodhound(CSTVisitor):
