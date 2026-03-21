@@ -24,12 +24,17 @@ from cstvis import Changer, Collector, Context
         ],),
     ],
 )
-def test_just_iterate_add_coordinates(file):
+def test_just_iterate_add_coordinates(file, with_context):
     changer = Changer(file)
 
-    @changer.converter
-    def name_changer(node: Add, context: Context):
-        return True
+    if with_context:
+        @changer.converter
+        def name_changer(node: Add, context: Context):
+            return True
+    else:
+        @changer.converter
+        def name_changer(node: Add):
+            return True
 
     coordinates = list(changer.iterate_coordinates())
 
@@ -60,15 +65,23 @@ def test_just_iterate_add_coordinates(file):
         ],),
     ],
 )
-def test_apply_one_change(file):
+def test_apply_one_change(file, with_context):
     changer = Changer(file)
 
-    @changer.converter
-    def change_add_to_sub(node: Add, context: Context):
-        return Subtract(
-            whitespace_before=node.whitespace_before,
-            whitespace_after=node.whitespace_after,
-        )
+    if with_context:
+        @changer.converter
+        def change_add_to_sub(node: Add, context: Context):
+            return Subtract(
+                whitespace_before=node.whitespace_before,
+                whitespace_after=node.whitespace_after,
+            )
+    else:
+        @changer.converter
+        def change_add_to_sub(node: Add):
+            return Subtract(
+                whitespace_before=node.whitespace_before,
+                whitespace_after=node.whitespace_after,
+            )
 
     results = []
 
@@ -87,15 +100,23 @@ def test_apply_one_change(file):
         ],),
     ],
 )
-def test_apply_two_changes_at_same_line(file):
+def test_apply_two_changes_at_same_line(file, with_context):
     changer = Changer(file)
 
-    @changer.converter
-    def change_add_to_sub(node: Add, context: Context):
-        return Subtract(
-            whitespace_before=node.whitespace_before,
-            whitespace_after=node.whitespace_after,
-        )
+    if with_context:
+        @changer.converter
+        def change_add_to_sub(node: Add, context: Context):
+            return Subtract(
+                whitespace_before=node.whitespace_before,
+                whitespace_after=node.whitespace_after,
+            )
+    else:
+        @changer.converter
+        def change_add_to_sub(node: Add):
+            return Subtract(
+                whitespace_before=node.whitespace_before,
+                whitespace_after=node.whitespace_after,
+            )
 
     results = []
 
@@ -118,22 +139,37 @@ def test_apply_two_changes_at_same_line(file):
         ],),
     ],
 )
-def test_to_different_changers_to_same_line(file):
+def test_to_different_changers_to_same_line(file, with_context):
     changer = Changer(file)
 
-    @changer.converter
-    def change_add_to_sub(node: Add, context: Context):
-        return Subtract(
-            whitespace_before=node.whitespace_before,
-            whitespace_after=node.whitespace_after,
-        )
+    if with_context:
+        @changer.converter
+        def change_add_to_sub(node: Add, context: Context):
+            return Subtract(
+                whitespace_before=node.whitespace_before,
+                whitespace_after=node.whitespace_after,
+            )
 
-    @changer.converter
-    def change_sub_to_add(node: Subtract, context: Context):
-        return Add(
-            whitespace_before=node.whitespace_before,
-            whitespace_after=node.whitespace_after,
-        )
+        @changer.converter
+        def change_sub_to_add(node: Subtract, context: Context):
+            return Add(
+                whitespace_before=node.whitespace_before,
+                whitespace_after=node.whitespace_after,
+            )
+    else:
+        @changer.converter
+        def change_add_to_sub(node: Add):
+            return Subtract(
+                whitespace_before=node.whitespace_before,
+                whitespace_after=node.whitespace_after,
+            )
+
+        @changer.converter
+        def change_sub_to_add(node: Subtract):
+            return Add(
+                whitespace_before=node.whitespace_before,
+                whitespace_after=node.whitespace_after,
+            )
 
     results = []
 
@@ -237,19 +273,32 @@ def test_read_metacodes_from_comment(file, expected_metacodes):
         ],),
     ],
 )
-def test_filter_any_on(file):
+def test_filter_any_on(file, with_context):
     changer = Changer(file)
 
-    @changer.converter
-    def change_something(node: Add, context: Context):
-        return Subtract(
-            whitespace_before=node.whitespace_before,
-            whitespace_after=node.whitespace_after,
-        )
+    if with_context:
+        @changer.converter
+        def change_something(node: Add, context: Context):
+            return Subtract(
+                whitespace_before=node.whitespace_before,
+                whitespace_after=node.whitespace_after,
+            )
 
-    @changer.filter
-    def filter_something(node: Any, context: Context) -> bool:
-        return True
+        @changer.filter
+        def filter_something(node: Any, context: Context) -> bool:
+            return True
+
+    else:
+        @changer.converter
+        def change_something(node: Add):
+            return Subtract(
+                whitespace_before=node.whitespace_before,
+                whitespace_after=node.whitespace_after,
+            )
+
+        @changer.filter
+        def filter_something(node: Any) -> bool:
+            return True
 
     results = []
 
@@ -268,19 +317,32 @@ def test_filter_any_on(file):
         ],),
     ],
 )
-def test_filter_any_off(file):
+def test_filter_any_off(file, with_context):
     changer = Changer(file)
 
-    @changer.converter
-    def change_something(node: Add, context: Context):
-        return Subtract(
-            whitespace_before=node.whitespace_before,
-            whitespace_after=node.whitespace_after,
-        )
+    if with_context:
+        @changer.converter
+        def change_something(node: Add, context: Context):
+            return Subtract(
+                whitespace_before=node.whitespace_before,
+                whitespace_after=node.whitespace_after,
+            )
 
-    @changer.filter
-    def filter_something(node: Any, context: Context) -> bool:
-        return False
+        @changer.filter
+        def filter_something(node: Any, context: Context) -> bool:
+            return False
+
+    else:
+        @changer.converter
+        def change_something(node: Add):
+            return Subtract(
+                whitespace_before=node.whitespace_before,
+                whitespace_after=node.whitespace_after,
+            )
+
+        @changer.filter
+        def filter_something(node: Any) -> bool:
+            return False
 
     results = []
 
@@ -298,19 +360,32 @@ def test_filter_any_off(file):
         ],),
     ],
 )
-def test_filter_cstnode_on(file):
+def test_filter_cstnode_on(file, with_context):
     changer = Changer(file)
 
-    @changer.converter
-    def change_something(node: Add, context: Context):
-        return Subtract(
-            whitespace_before=node.whitespace_before,
-            whitespace_after=node.whitespace_after,
-        )
+    if with_context:
+        @changer.converter
+        def change_something(node: Add, context: Context):
+            return Subtract(
+                whitespace_before=node.whitespace_before,
+                whitespace_after=node.whitespace_after,
+            )
 
-    @changer.filter
-    def filter_something(node: CSTNode, context: Context) -> bool:
-        return True
+        @changer.filter
+        def filter_something(node: CSTNode, context: Context) -> bool:
+            return True
+
+    else:
+        @changer.converter
+        def change_something(node: Add):
+            return Subtract(
+                whitespace_before=node.whitespace_before,
+                whitespace_after=node.whitespace_after,
+            )
+
+        @changer.filter
+        def filter_something(node: CSTNode) -> bool:
+            return True
 
     results = []
 
@@ -329,19 +404,32 @@ def test_filter_cstnode_on(file):
         ],),
     ],
 )
-def test_filter_cstnode_off(file):
+def test_filter_cstnode_off(file, with_context):
     changer = Changer(file)
 
-    @changer.converter
-    def change_something(node: Add, context: Context):
-        return Subtract(
-            whitespace_before=node.whitespace_before,
-            whitespace_after=node.whitespace_after,
-        )
+    if with_context:
+        @changer.converter
+        def change_something(node: Add, context: Context):
+            return Subtract(
+                whitespace_before=node.whitespace_before,
+                whitespace_after=node.whitespace_after,
+            )
 
-    @changer.filter
-    def filter_something(node: CSTNode, context: Context) -> bool:
-        return False
+        @changer.filter
+        def filter_something(node: CSTNode, context: Context) -> bool:
+            return False
+
+    else:
+        @changer.converter
+        def change_something(node: Add):
+            return Subtract(
+                whitespace_before=node.whitespace_before,
+                whitespace_after=node.whitespace_after,
+            )
+
+        @changer.filter
+        def filter_something(node: CSTNode) -> bool:
+            return False
 
     results = []
 
@@ -359,19 +447,32 @@ def test_filter_cstnode_off(file):
         ],),
     ],
 )
-def test_filter_node_on(file):
+def test_filter_node_on(file, with_context):
     changer = Changer(file)
 
-    @changer.converter
-    def change_something(node: Add, context: Context):
-        return Subtract(
-            whitespace_before=node.whitespace_before,
-            whitespace_after=node.whitespace_after,
-        )
+    if with_context:
+        @changer.converter
+        def change_something(node: Add, context: Context):
+            return Subtract(
+                whitespace_before=node.whitespace_before,
+                whitespace_after=node.whitespace_after,
+            )
 
-    @changer.filter
-    def filter_something(node: Add, context: Context) -> bool:
-        return True
+        @changer.filter
+        def filter_something(node: Add, context: Context) -> bool:
+            return True
+
+    else:
+        @changer.converter
+        def change_something(node: Add):
+            return Subtract(
+                whitespace_before=node.whitespace_before,
+                whitespace_after=node.whitespace_after,
+            )
+
+        @changer.filter
+        def filter_something(node: Add) -> bool:
+            return True
 
     results = []
 
@@ -390,19 +491,32 @@ def test_filter_node_on(file):
         ],),
     ],
 )
-def test_filter_node_off(file):
+def test_filter_node_off(file, with_context):
     changer = Changer(file)
 
-    @changer.converter
-    def change_something(node: Add, context: Context):
-        return Subtract(
-            whitespace_before=node.whitespace_before,
-            whitespace_after=node.whitespace_after,
-        )
+    if with_context:
+        @changer.converter
+        def change_something(node: Add, context: Context):
+            return Subtract(
+                whitespace_before=node.whitespace_before,
+                whitespace_after=node.whitespace_after,
+            )
 
-    @changer.filter
-    def filter_something(node: Add, context: Context) -> bool:
-        return False
+        @changer.filter
+        def filter_something(node: Add, context: Context) -> bool:
+            return False
+
+    else:
+        @changer.converter
+        def change_something(node: Add):
+            return Subtract(
+                whitespace_before=node.whitespace_before,
+                whitespace_after=node.whitespace_after,
+            )
+
+        @changer.filter
+        def filter_something(node: Add) -> bool:
+            return False
 
     results = []
 
@@ -420,19 +534,32 @@ def test_filter_node_off(file):
         ],),
     ],
 )
-def test_filter_other_node_on(file):
+def test_filter_other_node_on(file, with_context):
     changer = Changer(file)
 
-    @changer.converter
-    def change_something(node: Add, context: Context):
-        return Subtract(
-            whitespace_before=node.whitespace_before,
-            whitespace_after=node.whitespace_after,
-        )
+    if with_context:
+        @changer.converter
+        def change_something(node: Add, context: Context):
+            return Subtract(
+                whitespace_before=node.whitespace_before,
+                whitespace_after=node.whitespace_after,
+            )
 
-    @changer.filter
-    def filter_something(node: Subtract, context: Context) -> bool:
-        return True
+        @changer.filter
+        def filter_something(node: Subtract, context: Context) -> bool:
+            return True
+
+    else:
+        @changer.converter
+        def change_something(node: Add):
+            return Subtract(
+                whitespace_before=node.whitespace_before,
+                whitespace_after=node.whitespace_after,
+            )
+
+        @changer.filter
+        def filter_something(node: Subtract) -> bool:
+            return True
 
     results = []
 
@@ -451,19 +578,32 @@ def test_filter_other_node_on(file):
         ],),
     ],
 )
-def test_filter_other_node_off(file):
+def test_filter_other_node_off(file, with_context):
     changer = Changer(file)
 
-    @changer.converter
-    def change_something(node: Add, context: Context):
-        return Subtract(
-            whitespace_before=node.whitespace_before,
-            whitespace_after=node.whitespace_after,
-        )
+    if with_context:
+        @changer.converter
+        def change_something(node: Add, context: Context):
+            return Subtract(
+                whitespace_before=node.whitespace_before,
+                whitespace_after=node.whitespace_after,
+            )
 
-    @changer.filter
-    def filter_something(node: Subtract, context: Context) -> bool:
-        return False
+        @changer.filter
+        def filter_something(node: Subtract, context: Context) -> bool:
+            return False
+
+    else:
+        @changer.converter
+        def change_something(node: Add):
+            return Subtract(
+                whitespace_before=node.whitespace_before,
+                whitespace_after=node.whitespace_after,
+            )
+
+        @changer.filter
+        def filter_something(node: Subtract) -> bool:
+            return False
 
     results = []
 
@@ -474,45 +614,66 @@ def test_filter_other_node_off(file):
     assert results[0] == file.replace('+', '-')
 
 
-def test_converter_with_no_annotation():
+def test_converter_with_no_annotation(with_context):
     changer = Changer('1')
 
-    @changer.converter
-    def converter_func(node, context):
-        return node
+    if with_context:
+        @changer.converter
+        def converter_func(node, context):
+            return node
+    else:
+        @changer.converter
+        def converter_func(node):
+            return node
 
     assert [changer.apply_coordinate(coordinate) for coordinate in changer.iterate_coordinates()]
 
 
-def test_converter_with_any_annotation():
+def test_converter_with_any_annotation(with_context):
     changer = Changer('1')
 
-    @changer.converter
-    def converter_func(node: Any, context):
-        return node
+    if with_context:
+        @changer.converter
+        def converter_func(node: Any, context):
+            return node
+    else:
+        @changer.converter
+        def converter_func(node: Any):
+            return node
 
     assert [changer.apply_coordinate(coordinate) for coordinate in changer.iterate_coordinates()]
 
 
-def test_converter_with_cstnode_annotation_restriction():
+def test_converter_with_cstnode_annotation_restriction(with_context):
     changer = Changer('1')
 
-    @changer.converter
-    def converter_func(node: CSTNode, context):
-        return node
+    if with_context:
+        @changer.converter
+        def converter_func(node: CSTNode, context):
+            return node
+    else:
+        @changer.converter
+        def converter_func(node: CSTNode):
+            return node
 
     assert [changer.apply_coordinate(coordinate) for coordinate in changer.iterate_coordinates()]
 
 
-def test_convert_str():
+def test_convert_str(with_context):
     changer = Changer('a = "kek"')
 
     nodes = []
 
-    @changer.converter
-    def converter_func(node: str, context: Context):
-        nodes.append(node)
-        return node
+    if with_context:
+        @changer.converter
+        def converter_func(node: str, context: Context):
+            nodes.append(node)
+            return node
+    else:
+        @changer.converter
+        def converter_func(node: str):
+            nodes.append(node)
+            return node
 
     for coordinate in changer.iterate_coordinates():
         changer.apply_coordinate(coordinate)
@@ -521,12 +682,17 @@ def test_convert_str():
     assert isinstance(nodes[0], SimpleString)
 
 
-def test_convert_float():
+def test_convert_float(with_context):
     changer = Changer('a = 5.0')
 
-    @changer.converter
-    def converter_func(node: float, context: Context):
-        return node.with_changes(value=repr(node.evaluated_value + 1))  # type: ignore[attr-defined]
+    if with_context:
+        @changer.converter
+        def converter_func(node: float, context: Context):
+            return node.with_changes(value=repr(node.evaluated_value + 1))  # type: ignore[attr-defined]
+    else:
+        @changer.converter
+        def converter_func(node: float):
+            return node.with_changes(value=repr(node.evaluated_value + 1))  # type: ignore[attr-defined]
 
     for coordinate in changer.iterate_coordinates():
         changer.apply_coordinate(coordinate)
@@ -560,56 +726,93 @@ def test_filter_with_invalid_annotation():
             return True
 
 
-def test_two_converters_for_same_node():
+def test_two_converters_for_same_node(with_context):
     changer = Changer('5 + 5')
 
-    @changer.converter
-    def converter1(node: Add, context: Context):
-        return Subtract(
-            whitespace_before=node.whitespace_before,
-            whitespace_after=node.whitespace_after,
-        )
+    if with_context:
+        @changer.converter
+        def converter1(node: Add, context: Context):
+            return Subtract(
+                whitespace_before=node.whitespace_before,
+                whitespace_after=node.whitespace_after,
+            )
 
-    @changer.converter
-    def converter2(node: Add, context: Context):
-        return Multiply(
-            whitespace_before=node.whitespace_before,
-            whitespace_after=node.whitespace_after,
-        )
+        @changer.converter
+        def converter2(node: Add, context: Context):
+            return Multiply(
+                whitespace_before=node.whitespace_before,
+                whitespace_after=node.whitespace_after,
+            )
+
+    else:
+        @changer.converter
+        def converter1(node: Add):
+            return Subtract(
+                whitespace_before=node.whitespace_before,
+                whitespace_after=node.whitespace_after,
+            )
+
+        @changer.converter
+        def converter2(node: Add):
+            return Multiply(
+                whitespace_before=node.whitespace_before,
+                whitespace_after=node.whitespace_after,
+            )
 
     assert set(changer.apply_coordinate(coordinate) for coordinate in changer.iterate_coordinates()) == {'5 - 5', '5 * 5'}
 
 
-def test_use_collector_for_converter():
+def test_use_collector_for_converter(with_context):
     collector = Collector()
 
-    @collector.converter
-    def some_converter(node: Add, context: Context):
-        return Subtract(
-            whitespace_before=node.whitespace_before,
-            whitespace_after=node.whitespace_after,
-        )
+    if with_context:
+        @collector.converter
+        def some_converter(node: Add, context: Context):
+            return Subtract(
+                whitespace_before=node.whitespace_before,
+                whitespace_after=node.whitespace_after,
+            )
+    else:
+        @collector.converter
+        def some_converter(node: Add):
+            return Subtract(
+                whitespace_before=node.whitespace_before,
+                whitespace_after=node.whitespace_after,
+            )
 
     changer = Changer('a = 5 + 5', collector=collector)
 
     assert [changer.apply_coordinate(coordinate) for coordinate in changer.iterate_coordinates()] == ['a = 5 - 5']
 
 
-def test_use_collector_for_converter_and_filter():
+def test_use_collector_for_converter_and_filter(with_context):
     collector = Collector()
 
     filters_value = False
 
-    @collector.converter
-    def some_converter(node: Add, context: Context):
-        return Subtract(
-            whitespace_before=node.whitespace_before,
-            whitespace_after=node.whitespace_after,
-        )
+    if with_context:
+        @collector.converter
+        def some_converter(node: Add, context: Context):
+            return Subtract(
+                whitespace_before=node.whitespace_before,
+                whitespace_after=node.whitespace_after,
+            )
 
-    @collector.filter
-    def some_filter(node: Add, context: Context):
-        return filters_value
+        @collector.filter
+        def some_filter(node: Add, context: Context):
+            return filters_value
+
+    else:
+        @collector.converter
+        def some_converter(node: Add):
+            return Subtract(
+                whitespace_before=node.whitespace_before,
+                whitespace_after=node.whitespace_after,
+            )
+
+        @collector.filter
+        def some_filter(node: Add):
+            return filters_value
 
     changer = Changer('a = 5 + 5', collector=collector)
 
@@ -620,62 +823,94 @@ def test_use_collector_for_converter_and_filter():
     assert [changer.apply_coordinate(coordinate) for coordinate in changer.iterate_coordinates()] == ['a = 5 - 5']
 
 
-def test_union_with_csts():
+def test_union_with_csts(with_context):
     changer = Changer('5 - 5 + 5')
 
-    @changer.converter
-    def some_converter(node: Union[Add, Subtract], context: Context):
-        return Multiply(
-            whitespace_before=node.whitespace_before,
-            whitespace_after=node.whitespace_after,
-        )
+    if with_context:
+        @changer.converter
+        def some_converter(node: Union[Add, Subtract], context: Context):
+            return Multiply(
+                whitespace_before=node.whitespace_before,
+                whitespace_after=node.whitespace_after,
+            )
+    else:
+        @changer.converter
+        def some_converter(node: Union[Add, Subtract]):
+            return Multiply(
+                whitespace_before=node.whitespace_before,
+                whitespace_after=node.whitespace_after,
+            )
 
     assert [changer.apply_coordinate(coordinate) for coordinate in changer.iterate_coordinates()] == ['5 * 5 + 5', '5 - 5 * 5']
 
 
-def test_union_with_union_with_csts():
+def test_union_with_union_with_csts(with_context):
     changer = Changer('5 - 5 + 5')
 
-    @changer.converter
-    def some_converter(node: Union[Add, Union[Multiply, Subtract]], context: Context):
-        return Multiply(
-            whitespace_before=node.whitespace_before,
-            whitespace_after=node.whitespace_after,
-        )
+    if with_context:
+        @changer.converter
+        def some_converter(node: Union[Add, Union[Multiply, Subtract]], context: Context):
+            return Multiply(
+                whitespace_before=node.whitespace_before,
+                whitespace_after=node.whitespace_after,
+            )
+    else:
+        @changer.converter
+        def some_converter(node: Union[Add, Union[Multiply, Subtract]]):
+            return Multiply(
+                whitespace_before=node.whitespace_before,
+                whitespace_after=node.whitespace_after,
+            )
 
     assert set(changer.apply_coordinate(coordinate) for coordinate in changer.iterate_coordinates()) == {'5 * 5 + 5', '5 - 5 * 5'}
 
 
-def test_convert_plus_one():
+def test_convert_plus_one(with_context):
     changer = Changer('5 - 5 + 5')
 
-    @changer.converter
-    def convert_ints(node: int, context):
-        return node.with_changes(value=repr(node.evaluated_value + 1))  # type: ignore[attr-defined]
+    if with_context:
+        @changer.converter
+        def convert_ints(node: int, context):
+            return node.with_changes(value=repr(node.evaluated_value + 1))  # type: ignore[attr-defined]
+    else:
+        @changer.converter
+        def convert_ints(node: int):
+            return node.with_changes(value=repr(node.evaluated_value + 1))  # type: ignore[attr-defined]
 
     assert set(changer.apply_coordinate(coordinate) for coordinate in changer.iterate_coordinates()) == {'6 - 5 + 5', '5 - 6 + 5', '5 - 5 + 6'}
 
 
-def test_converter_for_any():
+def test_converter_for_any(with_context):
     changer = Changer('5 - 5 + 5')
 
     nodes = []
 
-    @changer.converter
-    def do_something(node: Any, context):
-        nodes.append(nodes)
-        return node
+    if with_context:
+        @changer.converter
+        def do_something(node: Any, context):
+            nodes.append(nodes)
+            return node
+    else:
+        @changer.converter
+        def do_something(node: Any):
+            nodes.append(nodes)
+            return node
 
     [changer.apply_coordinate(coordinate) for coordinate in changer.iterate_coordinates()]
     assert len(nodes) > 10
 
 
-def test_if_node_is_not_exist_nothing_changed():
+def test_if_node_is_not_exist_nothing_changed(with_context):
     changer = Changer('5 - 5 + 5')
 
-    @changer.converter
-    def do_something(node: float, context):
-        return node
+    if with_context:
+        @changer.converter
+        def do_something(node: float, context):
+            return node
+    else:
+        @changer.converter
+        def do_something(node: float):
+            return node
 
     assert [changer.apply_coordinate(coordinate) for coordinate in changer.iterate_coordinates()] == []
 
@@ -694,8 +929,8 @@ def test_get_function_id_from_itself():
     converter = list(changer.converters_by_types.values())[0][0]  # noqa: RUF015
     filter = list(changer.filters_by_types.values())[0][0]  # noqa: RUF015, A001
 
-    assert converter.get_function_id() == 'tests.test_changer:do_something:686'
-    assert filter.get_function_id() == 'tests.test_changer:filter_something:690'
+    assert converter.get_function_id() == 'tests.test_changer:do_something:921'
+    assert filter.get_function_id() == 'tests.test_changer:filter_something:925'
 
 
 def test_wrong_converter_and_wrong_filter():
