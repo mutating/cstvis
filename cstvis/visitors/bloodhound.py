@@ -41,7 +41,7 @@ class Bloodhound(CSTVisitor):
                 for filter_function in filters:
                     if not filter_function(node, context):
                         return True
-            for converter_id in set([get_function_id(x) for x in converters]):
+            for converter_id in set([x.get_function_id() for x in converters]):
                 emitting_coordinate = deepcopy(coordinate)
                 emitting_coordinate.converter_id = converter_id
                 self.coordinates.append(

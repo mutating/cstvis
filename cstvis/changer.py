@@ -1,5 +1,5 @@
 from collections import defaultdict
-from functools import cached_property
+from functools import cached_property, wraps
 from inspect import _empty, isclass, signature
 from typing import (
     Any,
@@ -10,6 +10,8 @@ from typing import (
     Optional,
     Type,
     Union,
+    TypeVar,
+    Generic,
     get_args,
     get_origin,
 )
@@ -21,6 +23,7 @@ except ImportError:  # pragma: no cover
     from typing import Union as UnionType  # type: ignore[assignment, unused-ignore]
 
 from libcst import CSTNode, Float, Integer, SimpleString, metadata, parse_module
+from printo import repred
 
 from cstvis.collector import Collector
 from cstvis.dto import Context, Coordinate
@@ -29,13 +32,28 @@ from cstvis.visitors.bloodhound import Bloodhound
 from cstvis.visitors.comments_aggregator import CommentsAggregator
 
 
+FilterOrConverterReturnValue = TypeVar('FilterOrConverterReturnValue')
+
+@repred(prefer_positional=True)
+class CallableWrapper(Generic[FilterOrConverterReturnValue]):
+    def __init__(self, filter_or_converter: Callable[[CSTNode, Context], FilterOrConverterReturnValue]) -> None:
+        self.filter_or_converter = filter_or_converter
+        wraps(filter_or_converter)(self)
+
+    def __call__(self, node: CSTNode, context: Context) -> FilterOrConverterReturnValue:
+        return self.filter_or_converter(node, context)
+
+    def get_function_id(self) -> str:
+        return f'{self.filter_or_converter.__module__}:{self.filter_or_converter.__name__}:{self.filter_or_converter.__code__.co_firstlineno}'
+
+
 class Changer:
     def __init__(self, source: str, collector: Optional[Collector] = None) -> None:
         self.source = source
         self.module = parse_module(source)
 
-        self.converters_by_types: Dict[Type[CSTNode], List[Callable[[CSTNode, Context], CSTNode]]] = defaultdict(list)
-        self.filters_by_types: Dict[Type[CSTNode], List[Callable[[CSTNode, Context], bool]]] = defaultdict(list)
+        self.converters_by_types: Dict[Type[CSTNode], List[CallableWrapper[CSTNode]]] = defaultdict(list)
+        self.filters_by_types: Dict[Type[CSTNode], List[CallableWrapper[bool]]] = defaultdict(list)
 
         if collector is not None:
             for collected_filter in collector._filters:
@@ -68,7 +86,7 @@ class Changer:
             raise TypeError('The type annotation for the first argument of the function must be descended from the libcst.CSTNode class (or be a libcst.CSTNode class if you want to set a filter for all nodes).') from e
 
         for annotation in annotations:
-            self.filters_by_types[annotation].append(function)
+            self.filters_by_types[annotation].append(CallableWrapper(function))
 
         return function
 
@@ -85,7 +103,7 @@ class Changer:
         annotations = self._separate_annotation(super_annotation)
 
         for annotation in annotations:
-            self.converters_by_types[annotation].append(function)
+            self.converters_by_types[annotation].append(CallableWrapper(function))
 
         return function
 
