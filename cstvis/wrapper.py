@@ -43,6 +43,8 @@ class CallableWrapper(Generic[FilterOrConverterReturnValue]):
     def __call__(self, node: CSTNode, context: Context) -> FilterOrConverterReturnValue:
         if PossibleCallMatcher('.').match(self.function):
             return self.function(node)  # type: ignore[call-arg]
+
+        context.meta = self.meta
         return self.function(node, context)  # type: ignore[call-arg]
 
     def get_function_id(self) -> str:

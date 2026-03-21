@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 from metacode import ParsedComment, parse
 
@@ -19,6 +19,7 @@ class Coordinate:
 class Context:
     coordinate: Coordinate
     comment: Optional[str]
+    meta: Optional[Dict[str, Any]] = None
 
     def get_metacodes(self, key: Union[str, List[str]]) -> List[ParsedComment]:
         if self.comment is None:
