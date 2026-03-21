@@ -60,7 +60,7 @@ class Changer:
         wrapper = CallableWrapper(function, meta=meta)
 
         for annotation in wrapper.first_node_annotations:
-            self.converters_by_types[annotation].append(CallableWrapper(function))
+            self.converters_by_types[annotation].append(wrapper)
 
         return function
 
