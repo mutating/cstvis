@@ -24,6 +24,8 @@ Many source code tools (linters, formatters, and others) work with [CST](https:/
 
 - [**Installation**](#installation)
 - [**Basic usage**](#basic-usage)
+- [**Filters**](#filters)
+- [**Context**](#context)
 
 
 ## Installation
@@ -85,6 +87,9 @@ for x in changer.iterate_coordinates():
 
 The key part of this example is the last two lines, where we iterate over the coordinates. What does that mean? The fact is that any code change made by this library happens in two stages: identify the coordinates of the change and then apply it. This separation makes it possible to distribute the work across multiple threads or even multiple machines. However, this design also has limitations. If you apply one coordinate change, the resulting code will differ from the original and the remaining coordinates will no longer be valid. You can only apply one change at a time.
 
+
+## Filters
+
 A filter is a special function with the same signature as a converter, registered with the `@<changer object>.filter` decorator. It decides whether a specific `CST` node should be changed, and returns `True` if yes, or `False` if no. The filter applies to all nodes if the node parameter has no type annotation, or if the parameter is annotated as [`Any`](https://docs.python.org/3/library/typing.html#typing.Any) or [`CSTNode`](https://libcst.readthedocs.io/en/latest/nodes.html#libcst.CSTNode). If you specify a node type in the annotation, the filter will be applied only to nodes of that type. Any other annotations are not allowed.
 
 Let's look at another example (part of the code is omitted):
@@ -111,6 +116,9 @@ for x in changer.iterate_coordinates():
 ```
 
 You see? Now the iteration yields only the first possible change, the rest are filtered out automatically because the filter returns `False` for them.
+
+
+## Context
 
 At this point, the basic usage should be clear. But what is the `context` parameter passed to converters and filters? It has two fields and one useful method:
 
