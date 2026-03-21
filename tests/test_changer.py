@@ -6,6 +6,7 @@ import pytest
 from full_match import match
 from libcst import Add, CSTNode, Multiply, SimpleString, Subtract
 from metacode import ParsedComment
+from sigmatch import SignatureMismatchError
 
 from cstvis import Changer, Collector, Context
 
@@ -157,7 +158,7 @@ def test_to_different_changers_to_same_line(file):
 def test_changing_function_with_wrong_number_of_parameters(file):
     changer = Changer(file)
 
-    with pytest.raises(ValueError, match=match('The converter is expected to accept 2 parameters: node and context; you have passed 3 parameters.')):
+    with pytest.raises(SignatureMismatchError, match=match('A function that takes a CST node and a context is expected.')):
         @changer.converter
         def changing_function(node: Add, context: Context, something_else: str):
             return Subtract(
@@ -165,7 +166,7 @@ def test_changing_function_with_wrong_number_of_parameters(file):
                 whitespace_after=node.whitespace_after,
             )
 
-    with pytest.raises(ValueError, match=match('The converter is expected to accept 2 parameters: node and context; you have passed 1 parameters.')):
+    with pytest.raises(SignatureMismatchError, match=match('A function that takes a CST node and a context is expected.')):
         @changer.converter
         def changing_function(node: Add):
             return Subtract(
@@ -539,12 +540,12 @@ def test_convert_float():
 def test_filter_with_wrong_number_of_parameters():
     changer = Changer('a = 5')
 
-    with pytest.raises(ValueError, match=match('The filter is expected to accept 2 parameters: node and context; you have passed 3 parameters.')):
+    with pytest.raises(SignatureMismatchError, match=match('A function that takes a CST node and a context is expected.')):
         @changer.filter
         def filter_func(node: Add, context: Context, extra_param: str):
             return True
 
-    with pytest.raises(ValueError, match=match('The filter is expected to accept 2 parameters: node and context; you have passed 1 parameters.')):
+    with pytest.raises(SignatureMismatchError, match=match('A function that takes a CST node and a context is expected.')):
         @changer.filter
         def filter_func(node: Add):
             return True
@@ -556,7 +557,7 @@ def test_filter_with_invalid_annotation():
     class SomeClass:
         pass
 
-    with pytest.raises(TypeError, match=match('The type annotation for the first argument of the function must be descended from the libcst.CSTNode class (or be a libcst.CSTNode class if you want to set a filter for all nodes).')):
+    with pytest.raises(TypeError, match=match('The type annotation for the first argument of the function must be descended from the libcst.CSTNode class.')):
         @changer.filter
         def filter_func(node: SomeClass, context: Context):
             return True
@@ -696,5 +697,29 @@ def test_get_function_id_from_itself():
     converter = list(changer.converters_by_types.values())[0][0]  # noqa: RUF015
     filter = list(changer.filters_by_types.values())[0][0]  # noqa: RUF015, A001
 
-    assert converter.get_function_id() == 'tests.test_changer:do_something:688'
-    assert filter.get_function_id() == 'tests.test_changer:filter_something:692'
+    assert converter.get_function_id() == 'tests.test_changer:do_something:689'
+    assert filter.get_function_id() == 'tests.test_changer:filter_something:693'
+
+
+def test_wrong_converter_and_wrong_filter():
+    changer = Changer('5 - 5 + 5')
+
+    with pytest.raises(SignatureMismatchError, match=match('A function that takes a CST node and a context is expected.')):
+        @changer.converter
+        def do_something_1(node: float):
+            return node
+
+    with pytest.raises(SignatureMismatchError, match=match('A function that takes a CST node and a context is expected.')):
+        @changer.converter
+        def do_something_2():
+            ...
+
+    with pytest.raises(SignatureMismatchError, match=match('A function that takes a CST node and a context is expected.')):
+        @changer.converter
+        def do_something_3(a, b, c):
+            ...
+
+    with pytest.raises(SignatureMismatchError, match=match('A function that takes a CST node and a context is expected.')):
+        @changer.filter
+        def filter_something_1(node: float):
+            return False
