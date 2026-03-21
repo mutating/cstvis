@@ -44,7 +44,7 @@ class CallableWrapper(Generic[FilterOrConverterReturnValue]):
         if PossibleCallMatcher('.').match(self.function):
             return self.function(node)  # type: ignore[call-arg]
 
-        context.meta = self.meta
+        context.meta = self.meta.copy() if isinstance(self.meta, dict) else None
         return self.function(node, context)  # type: ignore[call-arg]
 
     def get_function_id(self) -> str:
