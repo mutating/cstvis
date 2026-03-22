@@ -27,6 +27,7 @@ It is built on top of [`libcst`](https://pypi.org/project/libcst/).
 - [**Installation**](#installation)
 - [**Changing nodes**](#changing-nodes)
 - [**Filters**](#filters)
+- [**Launch stage separation**](#launch-stage-separation)
 - [**Context**](#context)
 
 
@@ -118,6 +119,26 @@ for x in changer.iterate_coordinates():
 ```
 
 You see? Now the iteration yields only the first possible change, the rest are filtered out automatically because the filter returns `False` for them.
+
+
+## Launch stage separation
+
+In some cases, you may need to separate the stage of collecting converter and filter functions from the startup stage. In this case, a special type of object — collectors — can help you. A collector object has the same decorators as `Changer` objects, and they can be used in exactly the same way. When creating a `Changer` object, you can pass a collector object to it:
+
+```python
+from cstvis import Collector
+
+collector = Collector()
+
+@collector.converter
+def change_add(node: Add):
+    return Subtract(
+        whitespace_before=node.whitespace_before,
+        whitespace_after=node.whitespace_after,
+    )
+
+changer = Changer(Path('tests/some_code/simple_sum.py').read_text(), collector=collector)
+```
 
 
 ## Context
