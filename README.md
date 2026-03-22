@@ -140,3 +140,27 @@ The context object has two necessary fields and one useful method:
 - `coordinate` with fields `start_line: int`, `start_column: int`, `end_line: int`, `end_column: int` and some others. This identifies the current location in the code.
 - `comment` - the comment on the first line of the node, if there is one, without the leading `#`, or `None` if there is no comment.
 - `get_metacodes(key: Union[str, List[str]]) -> List[ParsedComment]` - a method that returns a list of parsed comments in [metacode format](https://github.com/mutating/metacode) associated with this line of code.
+
+You can also pass an arbitrary dictionary to any decorator in this library; a copy of that dictionary will be passed as a `meta` attribute of the context object:
+
+```python
+from libcst import SimpleString
+from cstvis import Changer, Context
+from pathlib import Path
+
+# Content of the file:
+# a = "old string"
+
+changer = Changer(Path('tests/some_code/simple_string.py').read_text())
+
+@changer.converter(meta={'new_value': '"new string"'})
+def change_add(node: SimpleString, context: Context):
+    return SimpleString(value=context.meta['new_value'])
+
+for x in changer.iterate_coordinates():
+    print(x)
+    print(changer.apply_coordinate(x))
+
+#> Coordinate(file=None, class_name='SimpleString', start_line=1, start_column=4, end_line=1, end_column=9, converter_id='__main__:change_add:13')
+#> a = "new string"
+```
