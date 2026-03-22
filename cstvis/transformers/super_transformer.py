@@ -10,7 +10,7 @@ from libcst.matchers import (
 )
 
 from cstvis.dto import Context, Coordinate
-from cstvis.utils.function_id import get_function_id
+from cstvis.wrapper import CallableWrapper
 
 
 def get_all_matcher_nodes() -> List[BaseMatcherNode]:
@@ -39,7 +39,7 @@ class SuperTransformer(MatcherDecoratableTransformer):
     def __init__(
         self,
         target_coordinate: Coordinate,
-        nodes_mapping: Dict[Type[CSTNode], List[Callable[[CSTNode, Context], CSTNode]]],
+        nodes_mapping: Dict[Type[CSTNode], List[CallableWrapper[CSTNode]]],
         comments: Dict[int, str],
         nodes_ids: Set[int],
     ):
@@ -79,6 +79,6 @@ class SuperTransformer(MatcherDecoratableTransformer):
         if coordinate == target_coordinate_without_converter_id and converters:
             context = Context(coordinate, self.comments.get(coordinate.start_line))
             for converter in converters:  # pragma: no branch
-                if get_function_id(converter) == self.target_coordinate.converter_id:
+                if converter.get_function_id() == self.target_coordinate.converter_id:
                     return converter(updated_node, context)
         return updated_node
