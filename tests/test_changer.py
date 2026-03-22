@@ -1041,3 +1041,20 @@ def test_pass_meta_dict_to_filter_throw_collector(unfold):
 
     assert bread_crumbs == [meta]
     assert bread_crumbs[0] is not meta
+
+
+def test_it_passes_2_arguments_if_possible(unfold):
+    changer = Changer('5 + 4')
+
+    contexts = []
+
+    @unfold(changer.converter)
+    def change_something(node: Add, context=None):
+        contexts.append(context)
+        return node
+
+    for coordinate in changer.iterate_coordinates():
+        changer.apply_coordinate(coordinate)
+
+    assert len(contexts) == 1
+    assert isinstance(contexts[0], Context)
