@@ -1,3 +1,6 @@
+import pytest
+from full_match import match
+
 from cstvis import Collector
 
 
@@ -73,3 +76,11 @@ def test_add_two_collectors_with_filters():
     collector_3 = collector_1 + collector_2
 
     assert [x.function for x in collector_3._filters] == [some_converter_1, some_converter_2]
+
+
+def test_add_wrong_things_to_collector():
+    with pytest.raises(TypeError, match=match('Collector objects can only be added to other collector objects.')):
+        Collector() + 1
+
+    with pytest.raises(TypeError, match=match('Collector objects can only be added to other collector objects.')):
+        Collector() + 'kek'

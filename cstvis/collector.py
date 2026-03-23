@@ -15,7 +15,7 @@ class Collector:
 
     def __add__(self, other: 'Collector') -> 'Collector':
         if not isinstance(other, type(self)):
-            raise TypeError
+            raise TypeError('Collector objects can only be added to other collector objects.')
 
         result = Collector()
 
