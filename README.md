@@ -197,3 +197,15 @@ for x in changer.iterate_coordinates():
 #> Coordinate(file=None, class_name='SimpleString', start_line=1, start_column=4, end_line=1, end_column=9, converter_id='__main__:change_string:13')
 #> a = "new string"
 ```
+
+You can also pass a meta dictionary to the [`Collector`](#separating-registration-from-execution) class constructor. If you do this but also pass another dictionary to the `@<collector object>.converter` or `@<collector object>.filter` decorators, the dictionaries will be merged before being passed to the wrapped functions (if keys match, the values passed to the decorator will take precedence):
+
+```python
+collector = Collector(meta={'key 1': 'value 1'})
+
+@collector.converter(meta={'key 2': 'value 2'})
+def change_add(node: Add, context: Context):
+    print(context.meta)
+    #> {'key 1': 'value 1', 'key 2': 'value 2'}
+    ...
+```
