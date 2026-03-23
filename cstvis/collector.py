@@ -13,6 +13,19 @@ class Collector:
     _filters: List[CallableWrapper[bool]] = field(default_factory=list)
     _converters: List[CallableWrapper[CSTNode]] = field(default_factory=list)
 
+    def __add__(self, other: 'Collector') -> 'Collector':
+        if not isinstance(other, type(self)):
+            raise TypeError('Collector objects can only be added to other collector objects.')
+
+        result = Collector()
+
+        result._filters.extend(self._filters)
+        result._filters.extend(other._filters)
+        result._converters.extend(self._converters)
+        result._converters.extend(other._converters)
+
+        return result
+
     def filter(self, function: Optional[Union[Callable[[CSTNode], bool], Callable[[CSTNode, Context], bool]]] = None, meta: Optional[Dict[str, Any]] = None) -> Union[Union[Callable[[CSTNode], bool], Callable[[CSTNode, Context], bool]], Callable[[Union[Callable[[CSTNode], bool], Callable[[CSTNode, Context], bool]]], Union[Callable[[CSTNode], bool], Callable[[CSTNode, Context], bool]]]]:
         if function is None:
             return partial(self.filter, meta=meta)  # type: ignore[return-value]
