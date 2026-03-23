@@ -6,3 +6,4 @@ def test_repr():
         ...
 
     assert repr(CallableWrapper(function)) == 'CallableWrapper(function)'
+    assert repr(CallableWrapper(function, meta={'kek': 1234})) == "CallableWrapper(function, {'kek': 1234})"

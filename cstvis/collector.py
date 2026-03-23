@@ -1,17 +1,19 @@
-from dataclasses import dataclass, field
 from functools import partial
 from typing import Any, Callable, Dict, List, Optional, Union
 
 from libcst import CSTNode
+from printo import repred
 
 from cstvis.dto import Context
 from cstvis.wrapper import CallableWrapper
 
 
-@dataclass
+@repred(getters={'meta': lambda x: x._meta}, filters={'meta': lambda x: x})
 class Collector:
-    _filters: List[CallableWrapper[bool]] = field(default_factory=list)
-    _converters: List[CallableWrapper[CSTNode]] = field(default_factory=list)
+    def __init__(self, meta: Optional[Dict[str, Any]] = None) -> None:
+        self._meta: Dict[str, Any] = meta if meta else {}
+        self._filters: List[CallableWrapper[bool]] = []
+        self._converters: List[CallableWrapper[CSTNode]] = []
 
     def __add__(self, other: 'Collector') -> 'Collector':
         if not isinstance(other, type(self)):
@@ -30,12 +32,22 @@ class Collector:
         if function is None:
             return partial(self.filter, meta=meta)  # type: ignore[return-value]
 
-        self._filters.append(CallableWrapper(function, meta=meta))
+        self._add_to_collection(function, meta, self._filters)
         return function
 
     def converter(self, function: Optional[Union[Callable[[CSTNode], CSTNode], Callable[[CSTNode, Context], CSTNode]]] = None, meta: Optional[Dict[str, Any]] = None) -> Union[Union[Callable[[CSTNode], CSTNode], Callable[[CSTNode, Context], CSTNode]], Callable[[Union[Callable[[CSTNode], CSTNode], Callable[[CSTNode, Context], CSTNode]]], Union[Callable[[CSTNode], CSTNode], Callable[[CSTNode, Context], CSTNode]]]]:
         if function is None:
             return partial(self.converter, meta=meta)  # type: ignore[return-value]
 
-        self._converters.append(CallableWrapper(function, meta=meta))
+        self._add_to_collection(function, meta, self._converters)
         return function
+
+    def _add_to_collection(self, function: Union[Callable[[CSTNode], CSTNode], Callable[[CSTNode, Context], CSTNode], Callable[[CSTNode], bool], Callable[[CSTNode, Context], bool]], meta: Optional[Dict[str, Any]], collection: Union[List[CallableWrapper[bool]], List[CallableWrapper[CSTNode]]]) -> None:
+        if meta is not None:
+            submeta = self._meta.copy()
+            submeta.update(meta)
+            meta = submeta
+        elif self._meta:
+            meta = self._meta.copy()
+
+        collection.append(CallableWrapper(function, meta=meta))  # type: ignore[arg-type]
