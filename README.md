@@ -86,9 +86,9 @@ for x in changer.iterate_coordinates():
 #> c = b - a # kek
 ```
 
-As you can see in the example, the converter function takes an argument with a type hint. You don’t need to write type-checking if statements because the system determines which node types to convert based on this hint. You can omit the annotation entirely, specify [`Any`](https://docs.python.org/3/library/typing.html#the-any-type), or specify [`libcst.CSTNode`](https://libcst.readthedocs.io/en/latest/nodes.html#libcst.CSTNode), in which case the converter will be applied to all nodes. If you specify a more specific type, such as [`libcst.Add`](https://libcst.readthedocs.io/en/latest/nodes.html#libcst.Add), the converter will be applied only to those nodes. You can also specify multiple nodes using the `|` [syntax](https://docs.python.org/3/library/stdtypes.html#types-union) or [`Union`](https://docs.python.org/3/library/typing.html#typing.Union). Finally, several shortcuts are supported: `str` -> [`libcst.SimpleString`](https://libcst.readthedocs.io/en/latest/nodes.html#libcst.SimpleString), `int` -> [`libcst.Integer`](https://libcst.readthedocs.io/en/latest/nodes.html#libcst.Integer), and `float` -> [`libcst.Float`](https://libcst.readthedocs.io/en/latest/nodes.html#libcst.Float).
+As you can see in the example, the converter function takes an argument with a type hint. You don’t need to write type-checking if statements because the system determines which node types to convert based on this hint. You can omit the annotation entirely, specify [`Any`](https://docs.python.org/3/library/typing.html#the-any-type), or specify [`libcst.CSTNode`](https://libcst.readthedocs.io/en/latest/nodes.html#libcst.CSTNode), in which case the converter will be applied to all nodes. If you specify a more specific type, such as [`libcst.Add`](https://libcst.readthedocs.io/en/latest/nodes.html#libcst.Add), the converter will be applied only to those nodes. You can also specify multiple node types using the `|` [syntax](https://docs.python.org/3/library/stdtypes.html#types-union) or [`Union`](https://docs.python.org/3/library/typing.html#typing.Union). Finally, several shortcuts are supported: `str` -> [`libcst.SimpleString`](https://libcst.readthedocs.io/en/latest/nodes.html#libcst.SimpleString), `int` -> [`libcst.Integer`](https://libcst.readthedocs.io/en/latest/nodes.html#libcst.Integer), and `float` -> [`libcst.Float`](https://libcst.readthedocs.io/en/latest/nodes.html#libcst.Float).
 
-The key part of this example is the last two lines, where we iterate over the coordinates. What does that mean? This library performs each code change in two stages: identifying the coordinates of the change and then applying it.. This separation makes it possible to distribute the work across multiple threads or even multiple machines. However, this design also has limitations. If you apply one coordinate change, the resulting code will differ from the original and the remaining coordinates will no longer be valid. You can only apply one change at a time.
+The key part of this example is the last two lines, where we iterate over the coordinates. What does that mean? This library performs each code change in two stages: identifying the coordinates of the change and then applying it. This separation makes it possible to distribute the work across multiple threads or even multiple machines. However, this design also has limitations. If you apply one coordinate change, the resulting code will differ from the original and the remaining coordinates will no longer be valid. You can only apply one change at a time.
 
 
 ## Filters
@@ -155,7 +155,7 @@ collector_3 = collector_1 + collector_2
 
 ## Context
 
-By default, each converter or filter takes a single argument: the node to which it is applied. However, you can also specify a second argument: the context. The system analyzes your function signatures, detects that they expect a second argument, and passes it to them:
+By default, each converter or filter takes a single argument: the node to which it is applied. However, you can also specify a second argument: the context. The system analyzes your function signatures, detects that a function expects a second argument, and passes the context to it:
 
 ```python
 from cstvis import Context
@@ -198,7 +198,7 @@ for x in changer.iterate_coordinates():
 #> a = "new string"
 ```
 
-You can also pass a meta dictionary to the [`Collector`](#separating-registration-from-execution) class constructor. If you do this but also pass another dictionary to the `@<collector object>.converter` or `@<collector object>.filter` decorators; the dictionaries will be merged before being passed to the wrapped functions (if keys match, the values passed to the decorator will take precedence):
+You can also pass a meta dictionary to the [`Collector`](#separating-registration-from-execution) class constructor. If you do this but also pass another dictionary to the `@<collector object>.converter` or `@<collector object>.filter` decorators, the dictionaries will be merged before being passed to the wrapped functions (if keys match, the values passed to the decorator will take precedence):
 
 ```python
 collector = Collector(meta={'key 1': 'value 1'})
