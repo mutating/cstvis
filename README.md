@@ -140,6 +140,18 @@ def change_add(node: Add):
 changer = Changer(Path('tests/some_code/simple_sum.py').read_text(), collector=collector)
 ```
 
+If you need to assemble several collectors from different parts of your program and combine them, you can do so using the `+` symbol:
+
+```python
+collector_1 = Collector()
+collector_2 = Collector()
+
+...
+
+collector_3 = collector_1 + collector_2
+```
+
+> ↑ The resulting collector will contain all the filters and converters present in its components.
 
 ## Context
 
