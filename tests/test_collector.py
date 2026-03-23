@@ -84,3 +84,69 @@ def test_add_wrong_things_to_collector():
 
     with pytest.raises(TypeError, match=match('Collector objects can only be added to other collector objects.')):
         Collector() + 'kek'
+
+
+def test_repr():
+    assert repr(Collector()) == 'Collector()'
+    assert repr(Collector(meta={'lol': 'kek'})) == "Collector(meta={'lol': 'kek'})"
+
+
+def test_meta_for_collector_but_not_for_converter_or_filter():
+    meta = {'lol': 'kek'}
+    collector = Collector(meta=meta)
+
+    @collector.converter
+    def some_converter(node, context):  # noqa: ARG001
+        return node
+
+    @collector.filter
+    def some_filter(node, context):  # noqa: ARG001
+        return False
+
+    collector._converters[0].meta == meta
+    collector._converters[0].meta is not meta
+
+    collector._filters[0].meta == meta
+    collector._filters[0].meta is not meta
+
+
+def test_meta_for_converter_or_filter_but_not_for_collector():
+    meta = {'lol': 'kek'}
+    collector = Collector()
+
+    @collector.converter(meta=meta)
+    def some_converter(node, context):  # noqa: ARG001
+        return node
+
+    @collector.filter(meta=meta)
+    def some_filter(node, context):  # noqa: ARG001
+        return False
+
+    collector._converters[0].meta == meta
+    collector._converters[0].meta is not meta
+
+    collector._filters[0].meta == meta
+    collector._filters[0].meta is not meta
+
+
+def test_meta_for_for_converter_or_filter_and_for_collector():
+    meta_1 = {'lol_1': 'kek_1', 'lol_2': 'kek_2'}
+    meta_2 = {'lol_2': 'kek_2-2', 'lol_3': 'kek_3'}
+
+    collector = Collector(meta=meta_1)
+
+    @collector.converter(meta=meta_2)
+    def some_converter(node, context):  # noqa: ARG001
+        return node
+
+    @collector.filter(meta=meta_2)
+    def some_filter(node, context):  # noqa: ARG001
+        return False
+
+    collector._converters[0].meta == {'lol_1': 'kek_1', 'lol_2': 'kek_2-2', 'lol_3': 'kek_3'}
+    collector._converters[0].meta is not meta_1
+    collector._converters[0].meta is not meta_2
+
+    collector._filters[0].meta == {'lol_1': 'kek_1', 'lol_2': 'kek_2-2', 'lol_3': 'kek_3'}
+    collector._filters[0].meta is not meta_1
+    collector._filters[0].meta is not meta_2
