@@ -42,7 +42,7 @@ class Collector:
         self._add_to_collection(function, meta, self._converters)
         return function
 
-    def _add_to_collection(self, function, meta, collection) -> None:
+    def _add_to_collection(self, function: Union[Callable[[CSTNode], CSTNode], Callable[[CSTNode, Context], CSTNode], Callable[[CSTNode], bool], Callable[[CSTNode, Context], bool]], meta: Optional[Dict[str, Any]], collection: Union[List[CallableWrapper[bool]], List[CallableWrapper[CSTNode]]]) -> None:
         if meta is not None:
             submeta = self._meta.copy()
             submeta.update(meta)
@@ -50,4 +50,4 @@ class Collector:
         elif self._meta:
             meta = self._meta.copy()
 
-        collection.append(CallableWrapper(function, meta=meta))
+        collection.append(CallableWrapper(function, meta=meta))  # type: ignore[arg-type]
