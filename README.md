@@ -93,7 +93,7 @@ The key part of this example is the last two lines, where we iterate over the co
 
 ## Filters
 
-A filter is a special function registered with the `@<changer object>.filter` decorator. It decides whether a specific `CST` node should be changed, and returns `True` if yes, or `False` if no. As with converters, the filter's type hint determines which nodes it is applied to.
+A filter is a special function registered with the `@<changer object>.filter` decorator. It returns `True` if the node should be changed and `False` otherwise. As with converters, the filter's type hint determines which nodes it is applied to.
 
 Here is another example (part of the code is omitted):
 
@@ -118,12 +118,12 @@ for x in changer.iterate_coordinates():
 #> c = b + a # kek
 ```
 
-As you can see, now the iteration yields only the first possible change, the rest are filtered out automatically because the filter returns `False` for them.
+As you can see, the iteration now yields only the first possible change; the rest are filtered out automatically because the filter returns `False` for them.
 
 
 ## Separating registration from execution
 
-In some cases, you may want to separate converter and filter registration from execution. In this case, a special type of objects — `Collector` — can help you. A collector object has the same decorators as `Changer` objects, and they can be used in exactly the same way. When creating a `Changer` object, you can pass a collector object to it:
+In some cases, you may want to separate converter and filter registration from execution. In this case, a special object type — `Collector` — can help you. A collector object has the same decorators as `Changer` objects, and they can be used in exactly the same way. When creating a `Changer`, you can pass a `Collector` instance:
 
 ```python
 from cstvis import Collector
@@ -140,7 +140,7 @@ def change_add(node: Add):
 changer = Changer(Path('tests/some_code/simple_sum.py').read_text(), collector=collector)
 ```
 
-If you need to assemble several collectors from different parts of your program and combine them, you can do so using the `+` symbol:
+If you need to combine collectors defined in different parts of your program, you can do so using the `+` symbol:
 
 ```python
 collector_1 = Collector()
@@ -151,11 +151,11 @@ collector_2 = Collector()
 collector_3 = collector_1 + collector_2
 ```
 
-> ↑ The resulting collector will contain all the filters and converters present in its components.
+> ↑ The resulting collector will contain all the filters and converters from its components.
 
 ## Context
 
-By default, each converter or filter takes a single argument: the node to which it is applied. However, you can also specify a second argument: the context. The system analyzes the signatures of your functions, detects that they expect a second argument, and passes it to them:
+By default, each converter or filter takes a single argument: the node to which it is applied. However, you can also specify a second argument: the context. The system analyzes your function signatures, detects that they expect a second argument, and passes it to them:
 
 ```python
 from cstvis import Context
@@ -168,11 +168,11 @@ def change_add(node: Add, context: Context):  # <- The function takes a second a
     )
 ```
 
-The context object has two necessary fields and one useful method:
+The context object has two main fields and one useful method:
 
 - `coordinate` with fields `start_line: int`, `start_column: int`, `end_line: int`, `end_column: int` and some others. This identifies the current location in the code.
-- `comment` - the comment on the first line of the node, if there is one, without the leading `#`, or `None` if there is no comment.
-- `get_metacodes(key: Union[str, List[str]]) -> List[ParsedComment]` - a method that returns a list of parsed comments in [metacode format](https://github.com/mutating/metacode) associated with this line of code.
+- `comment` - the comment on the node’s first line, if there is one, without the leading `#`, or `None` if there is no comment.
+- `get_metacodes(key: Union[str, List[str]]) -> List[ParsedComment]` - a method that returns a list of parsed comments in [metacode format](https://github.com/mutating/metacode) associated with the current line of code.
 
 You can also pass an arbitrary dictionary to any decorator in this library; a copy of that dictionary will be passed as a `meta` attribute of the context object:
 
@@ -194,6 +194,6 @@ for x in changer.iterate_coordinates():
     print(x)
     print(changer.apply_coordinate(x))
 
-#> Coordinate(file=None, class_name='SimpleString', start_line=1, start_column=4, end_line=1, end_column=9, converter_id='__main__:change_add:13')
+#> Coordinate(file=None, class_name='SimpleString', start_line=1, start_column=4, end_line=1, end_column=9, converter_id='__main__:change_string:13')
 #> a = "new string"
 ```
