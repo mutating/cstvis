@@ -44,8 +44,9 @@ class Collector:
 
     def _add_to_collection(self, function, meta, collection) -> None:
         if meta is not None:
-            meta = meta.copy()
-            meta.update(self._meta)
+            submeta = self._meta.copy()
+            submeta.update(meta)
+            meta = submeta
         elif self._meta:
             meta = self._meta.copy()
 
