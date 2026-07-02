@@ -49,15 +49,50 @@ def test_just_iterate_add_coordinates(file, with_context, unfold):
     assert coordinates[0].class_name == 'Add'
     assert coordinates[0].start_line == 3
     assert coordinates[0].start_column == 7
-    assert coordinates[0].start_line == 3
-    assert coordinates[0].start_column == 7
+    assert coordinates[0].end_line == 3
+    assert coordinates[0].end_column == 8
 
     assert coordinates[1].file is None
     assert coordinates[1].class_name == 'Add'
     assert coordinates[1].start_line == 6
     assert coordinates[1].start_column == 6
-    assert coordinates[1].start_line == 6
-    assert coordinates[1].start_column == 6
+    assert coordinates[1].end_line == 6
+    assert coordinates[1].end_column == 7
+
+
+@pytest.mark.parametrize(
+    ['strings'],
+    [
+        ([
+            'a = 1 + 2',
+            'b = 3 + 4',
+        ],),
+    ],
+)
+def test_iterate_coordinates_filters_matching_add_without_calling_converter(file):
+    """
+    Iterating coordinates applies filters without running converters.
+
+    When a filter rejects one matching Add node, only the accepted coordinate is emitted and the converter callback remains untouched.
+    """
+    changer = Changer(file)
+    converter_calls = []
+
+    @changer.converter
+    def name_changer(node: Add):
+        converter_calls.append(node)
+        return node
+
+    @changer.filter
+    def filter_second_add(node: Add, context: Context) -> bool:
+        return context.coordinate.start_line == 2
+
+    coordinates = list(changer.iterate_coordinates())
+
+    assert converter_calls == []
+    assert len(coordinates) == 1
+    assert coordinates[0].start_line == 2
+    assert coordinates[0].start_column == 6
 
 
 @pytest.mark.parametrize(
@@ -237,6 +272,7 @@ def test_changing_function_with_wrong_number_of_parameters(file, unfold):
     ['strings', 'expected_comment'],
     [
         (['a = 5 + 6- 7'], None),
+        (['# preceding comment', 'a = 5 + 6- 7'], None),
         (['a = 5 + 6- 7#'], ''),
         (['a = 5 + 6- 7# ololo!'], ' ololo!'),
         (['a = 5 + 6- 7# other_key: action'], ' other_key: action'),
@@ -1084,8 +1120,8 @@ def test_get_function_id_from_itself(unfold):
     converter = list(changer.converters_by_types.values())[0][0]  # noqa: RUF015
     filter = list(changer.filters_by_types.values())[0][0]  # noqa: RUF015, A001
 
-    assert converter.get_function_id() == 'tests.test_changer:do_something:1076'
-    assert filter.get_function_id() == 'tests.test_changer:filter_something:1080'
+    assert converter.get_function_id() == 'tests.test_changer:do_something:1112'
+    assert filter.get_function_id() == 'tests.test_changer:filter_something:1116'
 
 
 def test_wrong_converter_and_wrong_filter(unfold):
