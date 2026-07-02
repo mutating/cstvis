@@ -29,7 +29,7 @@ from cstvis.dto import Context
 
 FilterOrConverterReturnValue = TypeVar('FilterOrConverterReturnValue')
 
-@repred(prefer_positional=True)  # type: ignore[call-overload]
+@repred(prefer_positional=True)
 class CallableWrapper(Generic[FilterOrConverterReturnValue]):
     matcher = PossibleCallMatcher('.') + PossibleCallMatcher('..')
 
