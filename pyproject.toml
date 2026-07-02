@@ -4,15 +4,15 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cstvis"
-version = "0.0.7"
+version = "0.0.8"
 authors = [{ name = "Evgeniy Blinov", email = "zheni-b@yandex.ru" }]
 description = 'Incremental change of CST'
 readme = "README.md"
 requires-python = ">=3.8"
 dependencies = [
-    'printo>=0.0.22',
-    'sigmatch>=0.0.9',
-    'metacode>=0.0.6',
+    'printo>=0.0.29',
+    'sigmatch>=0.0.10',
+    'metacode>=0.0.7',
     "libcst>=1.1.0 ; python_version == '3.8'",
     "libcst>=1.8.6 ; python_version > '3.8'",
 ]
@@ -35,6 +35,7 @@ classifiers = [
     'License :: OSI Approved :: MIT License',
     'Intended Audience :: Developers',
     'Topic :: Software Development :: Libraries',
+    'Typing :: Typed',
 ]
 keywords = ['CST', 'visitor']
 

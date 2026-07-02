@@ -25,6 +25,11 @@ from cstvis import Changer, Collector, Context
     ],
 )
 def test_just_iterate_add_coordinates(file, with_context, unfold):
+    """
+    Iterating coordinates for raw source reports only matching Add operators.
+
+    It returns the two Add coordinates in source order, with no file path and the expected class name and start positions.
+    """
     changer = Changer(file)
 
     if with_context:
@@ -44,15 +49,50 @@ def test_just_iterate_add_coordinates(file, with_context, unfold):
     assert coordinates[0].class_name == 'Add'
     assert coordinates[0].start_line == 3
     assert coordinates[0].start_column == 7
-    assert coordinates[0].start_line == 3
-    assert coordinates[0].start_column == 7
+    assert coordinates[0].end_line == 3
+    assert coordinates[0].end_column == 8
 
     assert coordinates[1].file is None
     assert coordinates[1].class_name == 'Add'
     assert coordinates[1].start_line == 6
     assert coordinates[1].start_column == 6
-    assert coordinates[1].start_line == 6
-    assert coordinates[1].start_column == 6
+    assert coordinates[1].end_line == 6
+    assert coordinates[1].end_column == 7
+
+
+@pytest.mark.parametrize(
+    ['strings'],
+    [
+        ([
+            'a = 1 + 2',
+            'b = 3 + 4',
+        ],),
+    ],
+)
+def test_iterate_coordinates_filters_matching_add_without_calling_converter(file):
+    """
+    Iterating coordinates applies filters without running converters.
+
+    When a filter rejects one matching Add node, only the accepted coordinate is emitted and the converter callback remains untouched.
+    """
+    changer = Changer(file)
+    converter_calls = []
+
+    @changer.converter
+    def name_changer(node: Add):
+        converter_calls.append(node)
+        return node
+
+    @changer.filter
+    def filter_second_add(node: Add, context: Context) -> bool:
+        return context.coordinate.start_line == 2
+
+    coordinates = list(changer.iterate_coordinates())
+
+    assert converter_calls == []
+    assert len(coordinates) == 1
+    assert coordinates[0].start_line == 2
+    assert coordinates[0].start_column == 6
 
 
 @pytest.mark.parametrize(
@@ -66,6 +106,11 @@ def test_just_iterate_add_coordinates(file, with_context, unfold):
     ],
 )
 def test_apply_one_change(file, with_context, unfold):
+    """
+    Applying one Changer-registered converter rewrites the single matching operation in the returned full source.
+
+    Using the only Add coordinate, the plus becomes a minus and surrounding whitespace is preserved across callback signatures and decorator forms.
+    """
     changer = Changer(file)
 
     if with_context:
@@ -101,6 +146,11 @@ def test_apply_one_change(file, with_context, unfold):
     ],
 )
 def test_apply_two_changes_at_same_line(file, with_context, unfold):
+    """
+    Applying a selected change to one of several same-line additions changes only that operator.
+
+    Coordinates distinguish additions on the same line, so each candidate is applied independently from the original source while preserving the other additions and spacing.
+    """
     changer = Changer(file)
 
     if with_context:
@@ -140,6 +190,11 @@ def test_apply_two_changes_at_same_line(file, with_context, unfold):
     ],
 )
 def test_to_different_changers_to_same_line(file, with_context, unfold):
+    """
+    Converters targeting different operator types on the same source line remain independently addressable.
+
+    Applying the Add coordinate changes only the plus, and applying the Subtract coordinate changes only the minus; the neighboring operator is left unchanged in each result.
+    """
     changer = Changer(file)
 
     if with_context:
@@ -192,6 +247,11 @@ def test_to_different_changers_to_same_line(file, with_context, unfold):
     ],
 )
 def test_changing_function_with_wrong_number_of_parameters(file, unfold):
+    """
+    Reject converter callbacks that cannot be called with a node or with a node and context.
+
+    Zero-argument and three-argument converters are rejected during registration, with the error type and message treated as part of the contract.
+    """
     changer = Changer(file)
 
     with pytest.raises(SignatureMismatchError, match=match('A function that takes a CST node and a context is expected.')):
@@ -212,6 +272,7 @@ def test_changing_function_with_wrong_number_of_parameters(file, unfold):
     ['strings', 'expected_comment'],
     [
         (['a = 5 + 6- 7'], None),
+        (['# preceding comment', 'a = 5 + 6- 7'], None),
         (['a = 5 + 6- 7#'], ''),
         (['a = 5 + 6- 7# ololo!'], ' ololo!'),
         (['a = 5 + 6- 7# other_key: action'], ' other_key: action'),
@@ -222,6 +283,11 @@ def test_changing_function_with_wrong_number_of_parameters(file, unfold):
     ],
 )
 def test_read_comments(file, expected_comment, unfold):
+    """
+    Context exposes the same-line comment for the node being converted.
+
+    A missing comment is None. Otherwise, the value is the raw comment text after removing only the leading #, preserving whitespace after it and later # characters.
+    """
     changer = Changer(file)
 
     comments_containers = []
@@ -250,6 +316,11 @@ def test_read_comments(file, expected_comment, unfold):
     ],
 )
 def test_read_metacodes_from_comment(file, expected_metacodes, unfold):
+    """
+    Context.get_metacodes('key') returns only matching same-line metacodes.
+
+    Inputs without a `key: action` metacode return an empty list, while matching comments return one parsed entry even when adjacent to code or followed by extra comment text.
+    """
     changer = Changer(file)
 
     metacodes_containers = []
@@ -274,6 +345,11 @@ def test_read_metacodes_from_comment(file, expected_metacodes, unfold):
     ],
 )
 def test_filter_any_on(file, with_context, unfold):
+    """
+    An Any-annotated filter that returns True permits matching Changer conversions.
+
+    The test checks that the catch-all filter allows the single Add-to-Subtract change to be discovered and applied for both node-only and context-aware callables, through both decorator styles.
+    """
     changer = Changer(file)
 
     if with_context:
@@ -318,6 +394,11 @@ def test_filter_any_on(file, with_context, unfold):
     ],
 )
 def test_filter_any_off(file, with_context, unfold):
+    """
+    A filter annotated with Any rejects an otherwise eligible change when it returns False.
+
+    This checks that the broad filter blocks an Add converter that would replace a plus operator, leaving no results across the supported callback signatures and decorator forms.
+    """
     changer = Changer(file)
 
     if with_context:
@@ -361,6 +442,11 @@ def test_filter_any_off(file, with_context, unfold):
     ],
 )
 def test_filter_cstnode_on(file, with_context, unfold):
+    """
+    A truthy broad CSTNode filter allows a concrete Add conversion to remain available.
+
+    The test uses one plus expression and an Add converter that changes it to subtraction, then checks that one coordinate is emitted and applying it changes only that plus operator. The behavior is covered for callbacks with or without context and for both decorator forms.
+    """
     changer = Changer(file)
 
     if with_context:
@@ -405,6 +491,11 @@ def test_filter_cstnode_on(file, with_context, unfold):
     ],
 )
 def test_filter_cstnode_off(file, with_context, unfold):
+    """
+    A broad CSTNode filter returning False suppresses otherwise matching converter changes.
+
+    Even when a converter targets a specific Add node, the rejecting CSTNode filter applies to that candidate, so no changes are emitted. The same behavior is expected for callbacks with or without Context and for both supported decorator registration styles.
+    """
     changer = Changer(file)
 
     if with_context:
@@ -448,6 +539,11 @@ def test_filter_cstnode_off(file, with_context, unfold):
     ],
 )
 def test_filter_node_on(file, with_context, unfold):
+    """
+    An Add-annotated filter returning True permits the Add conversion.
+
+    The single Add-to-Subtract change is emitted and applied across node-only/context-aware callbacks and both decorator forms, leaving the existing Subtract operator unchanged.
+    """
     changer = Changer(file)
 
     if with_context:
@@ -492,6 +588,11 @@ def test_filter_node_on(file, with_context, unfold):
     ],
 )
 def test_filter_node_off(file, with_context, unfold):
+    """
+    Rejects an Add conversion when a matching Add filter returns false.
+
+    The otherwise valid plus-to-minus change produces no results because the concrete node filter vetoes the candidate before any coordinate is applied. The expectation holds for both node-only and context-aware callbacks, and for both decorator invocation styles.
+    """
     changer = Changer(file)
 
     if with_context:
@@ -535,6 +636,11 @@ def test_filter_node_off(file, with_context, unfold):
     ],
 )
 def test_filter_other_node_on(file, with_context, unfold):
+    """
+    A true filter for a different concrete node type coexists with an Add conversion.
+
+    The source contains one Add and one existing Subtract, but only the Add converter yields a change. Applying that change replaces the plus with a minus while leaving the existing minus intact, across context-aware and context-free callbacks and both decorator styles.
+    """
     changer = Changer(file)
 
     if with_context:
@@ -579,6 +685,11 @@ def test_filter_other_node_on(file, with_context, unfold):
     ],
 )
 def test_filter_other_node_off(file, with_context, unfold):
+    """
+    A false filter for a different concrete node type does not block an eligible conversion.
+
+    An Add converter still yields one change even when a Subtract filter returns False, because that filter is unrelated to the Add candidate. Applying the change rewrites only the plus operator to a minus, and the behavior is the same with or without Context and for both decorator invocation styles.
+    """
     changer = Changer(file)
 
     if with_context:
@@ -615,6 +726,11 @@ def test_filter_other_node_off(file, with_context, unfold):
 
 
 def test_converter_with_no_annotation(with_context, unfold):
+    """
+    Accept an unannotated converter parameter as a catch-all for CST nodes.
+
+    The identity converter should produce applicable coordinates for the minimal source and work both with and without context, regardless of decorator invocation form.
+    """
     changer = Changer('1')
 
     if with_context:
@@ -630,6 +746,11 @@ def test_converter_with_no_annotation(with_context, unfold):
 
 
 def test_converter_with_any_annotation(with_context, unfold):
+    """
+    Accepts typing.Any as a universal converter annotation.
+
+    An Any-annotated identity converter for source '1' should discover at least one coordinate and apply successfully across supported converter signatures and decorator forms.
+    """
     changer = Changer('1')
 
     if with_context:
@@ -645,6 +766,11 @@ def test_converter_with_any_annotation(with_context, unfold):
 
 
 def test_converter_with_cstnode_annotation_restriction(with_context, unfold):
+    """
+    Accepts libcst.CSTNode as a broad converter annotation.
+
+    The converter should apply to at least one coordinate for a minimal source, whether it accepts only the node or also accepts context, and whether the decorator is used bare or called.
+    """
     changer = Changer('1')
 
     if with_context:
@@ -660,6 +786,11 @@ def test_converter_with_cstnode_annotation_restriction(with_context, unfold):
 
 
 def test_convert_str(with_context, unfold):
+    """
+    Dispatches the builtin str annotation shortcut to string literal CST nodes.
+
+    Verifies that a converter registered for source containing one string literal is called exactly once and receives a libcst.SimpleString node, across the supported converter signature and decorator forms.
+    """
     changer = Changer('a = "kek"')
 
     nodes = []
@@ -683,6 +814,11 @@ def test_convert_str(with_context, unfold):
 
 
 def test_convert_float(with_context, unfold):
+    """
+    Converts a float literal selected by the built-in `float` shortcut.
+
+    A `float` converter finds the single `5.0` in `a = 5.0` and returns `a = 6.0`; a prior discarded application must not affect the later result. This holds with or without context and for both decorator forms.
+    """
     changer = Changer('a = 5.0')
 
     if with_context:
@@ -701,6 +837,11 @@ def test_convert_float(with_context, unfold):
 
 
 def test_filter_with_wrong_number_of_parameters(unfold):
+    """
+    Reject filters with unsupported callback arity.
+
+    Covers both direct and called decorator forms, asserting that zero-argument and three-argument filter callbacks fail registration with SignatureMismatchError.
+    """
     changer = Changer('a = 5')
 
     with pytest.raises(SignatureMismatchError, match=match('A function that takes a CST node and a context is expected.')):
@@ -715,6 +856,11 @@ def test_filter_with_wrong_number_of_parameters(unfold):
 
 
 def test_filter_with_invalid_annotation(unfold):
+    """
+    Rejects filters whose node parameter is annotated with a non-CSTNode class.
+
+    The callback otherwise has a valid node-and-context signature, so either filter decorator form should raise TypeError for the invalid annotation instead of treating it as a signature mismatch.
+    """
     changer = Changer('a = 5')
 
     class SomeClass:
@@ -727,6 +873,11 @@ def test_filter_with_invalid_annotation(unfold):
 
 
 def test_two_converters_for_same_node(with_context, unfold):
+    """
+    Multiple converters for the same Add node produce separate choices.
+
+    For `5 + 5`, the two Add converters yield independent results, `5 - 5` and `5 * 5`, across node-only/context-aware callbacks and both decorator forms.
+    """
     changer = Changer('5 + 5')
 
     if with_context:
@@ -763,6 +914,11 @@ def test_two_converters_for_same_node(with_context, unfold):
 
 
 def test_use_collector_for_converter(with_context, unfold):
+    """
+    Collected converters participate in Changer coordinate discovery and application.
+
+    A converter registered on a Collector and supplied to Changer should rewrite the single Add operator in the source to Subtract, for both supported converter signatures and both Collector.converter decorator forms.
+    """
     collector = Collector()
 
     if with_context:
@@ -786,6 +942,11 @@ def test_use_collector_for_converter(with_context, unfold):
 
 
 def test_use_collector_for_converter_and_filter(with_context, unfold):
+    """
+    Collected filters gate collected converters.
+
+    With the filter returning False, the Collector-backed Changer emits no changes; after the filter state flips to True, the same source yields `a = 5 - 5` across callback signatures and decorator forms.
+    """
     collector = Collector()
 
     filters_value = False
@@ -824,6 +985,11 @@ def test_use_collector_for_converter_and_filter(with_context, unfold):
 
 
 def test_union_with_csts(with_context, unfold):
+    """
+    Union[Add, Subtract] converters produce one rewrite per matching operator.
+
+    For `5 - 5 + 5`, coordinates are emitted in source order, and each application replaces only the selected Add or Subtract operator with Multiply across callback signatures.
+    """
     changer = Changer('5 - 5 + 5')
 
     if with_context:
@@ -845,6 +1011,11 @@ def test_union_with_csts(with_context, unfold):
 
 
 def test_union_with_union_with_csts(with_context, unfold):
+    """
+    Nested Union annotations expand to the matching operator types present in the source.
+
+    For `Union[Add, Union[Multiply, Subtract]]` on `5 - 5 + 5`, only Add and Subtract coordinates are emitted, yielding the two single-operator rewrites.
+    """
     changer = Changer('5 - 5 + 5')
 
     if with_context:
@@ -866,6 +1037,11 @@ def test_union_with_union_with_csts(with_context, unfold):
 
 
 def test_convert_plus_one(with_context, unfold):
+    """
+    Treat converters annotated with int as applying to integer literals.
+
+    For `5 - 5 + 5`, each integer occurrence can be changed independently to its plus-one value, across node-only and context-aware converter signatures and both decorator call styles.
+    """
     changer = Changer('5 - 5 + 5')
 
     if with_context:
@@ -881,6 +1057,11 @@ def test_convert_plus_one(with_context, unfold):
 
 
 def test_converter_for_any(with_context, unfold):
+    """
+    An Any-annotated converter is considered for many CST nodes.
+
+    Applying every coordinate in `Changer('5 - 5 + 5')` invokes the identity converter more than ten times across node-only/context-aware callbacks and both decorator forms.
+    """
     changer = Changer('5 - 5 + 5')
 
     nodes = []
@@ -901,6 +1082,11 @@ def test_converter_for_any(with_context, unfold):
 
 
 def test_if_node_is_not_exist_nothing_changed(with_context, unfold):
+    """
+    Converters targeting float literals produce no changes when the source has no float literals.
+
+    A float-annotated converter should produce no applied changes for `5 - 5 + 5`, whose numeric literals are all integers, across supported context and decorator variants.
+    """
     changer = Changer('5 - 5 + 5')
 
     if with_context:
@@ -916,6 +1102,11 @@ def test_if_node_is_not_exist_nothing_changed(with_context, unfold):
 
 
 def test_get_function_id_from_itself(unfold):
+    """
+    Registered converter and filter wrappers report deterministic function IDs.
+
+    The IDs include the wrapped callable's module, function name, and first source line for both bare-decorator and called-decorator registration forms.
+    """
     changer = Changer('5 - 5 + 5')
 
     @unfold(changer.converter)
@@ -929,11 +1120,16 @@ def test_get_function_id_from_itself(unfold):
     converter = list(changer.converters_by_types.values())[0][0]  # noqa: RUF015
     filter = list(changer.filters_by_types.values())[0][0]  # noqa: RUF015, A001
 
-    assert converter.get_function_id() == 'tests.test_changer:do_something:921'
-    assert filter.get_function_id() == 'tests.test_changer:filter_something:925'
+    assert converter.get_function_id() == 'tests.test_changer:do_something:1112'
+    assert filter.get_function_id() == 'tests.test_changer:filter_something:1116'
 
 
 def test_wrong_converter_and_wrong_filter(unfold):
+    """
+    Reject converter and filter callbacks with invalid arity.
+
+    Both decorators should raise SignatureMismatchError when registering callbacks that take no parameters or three parameters, whether used directly or as called decorator factories.
+    """
     changer = Changer('5 - 5 + 5')
 
     with pytest.raises(SignatureMismatchError, match=match('A function that takes a CST node and a context is expected.')):
@@ -958,6 +1154,11 @@ def test_wrong_converter_and_wrong_filter(unfold):
 
 
 def test_pass_meta_dict_to_converter():
+    """
+    Direct Changer converters receive copied decorator metadata in their Context.
+
+    Applying the Add coordinate from `5 - 5 + 5` triggers a two-argument converter and verifies that `context.meta` equals the supplied meta dictionary while remaining a distinct top-level dict.
+    """
     bread_crumbs = []
     changer = Changer('5 - 5 + 5')
     meta = {'key': 123}
@@ -977,6 +1178,11 @@ def test_pass_meta_dict_to_converter():
 
 
 def test_pass_meta_dict_to_filter(unfold):
+    """
+    Passing a metadata dict to a Changer filter exposes an equal but distinct copy through Context.meta.
+
+    The filter is evaluated while discovering a matching Add candidate, so the test focuses on filter metadata delivery rather than source transformation.
+    """
     bread_crumbs = []
     changer = Changer('5 - 5 + 5')
     meta = {'key': 123}
@@ -1000,6 +1206,11 @@ def test_pass_meta_dict_to_filter(unfold):
 
 
 def test_pass_meta_dict_to_converter_throw_collector():
+    """
+    Collector-registered converter meta reaches the converter context as an equal copy.
+
+    When a Changer built from the Collector applies the Add converter, the converter records one Context.meta value equal to {'key': 123} and distinct from the original decorator dict.
+    """
     bread_crumbs = []
     collector = Collector()
     meta = {'key': 123}
@@ -1020,6 +1231,11 @@ def test_pass_meta_dict_to_converter_throw_collector():
 
 
 def test_pass_meta_dict_to_filter_throw_collector(unfold):
+    """
+    Collector-registered filter metadata is copied into Context during coordinate discovery.
+
+    A Changer built from the Collector has a collected Add converter only to make the Add node eligible. The collected Add filter returns False, and the assertions focus on context.meta matching the filter decorator's dict without aliasing it.
+    """
     bread_crumbs = []
     collector = Collector()
     meta = {'key': 123}
@@ -1044,6 +1260,11 @@ def test_pass_meta_dict_to_filter_throw_collector(unfold):
 
 
 def test_it_passes_2_arguments_if_possible(unfold):
+    """
+    Passes Context as the second argument when a converter can accept it.
+
+    This covers the ambiguous valid case where the converter's second positional parameter is optional, defaults to None, and is not annotated as Context. The converter should receive a real Context object instead of falling back to its default.
+    """
     changer = Changer('5 + 4')
 
     contexts = []
