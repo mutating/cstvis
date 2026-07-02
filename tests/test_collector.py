@@ -5,6 +5,11 @@ from cstvis import Collector
 
 
 def test_collections_in_different_collectors_are_not_same():
+    """
+    A new Collector starts with empty, independent registration lists.
+
+    Separate Collector instances have distinct `_filters` and `_converters` lists, so registrations cannot leak through shared mutable defaults.
+    """
     first_collector = Collector()
     second_collector = Collector()
 
@@ -19,6 +24,11 @@ def test_collections_in_different_collectors_are_not_same():
 
 
 def test_collect_some_filter():
+    """
+    Registering a collector filter stores the original function in the filter collection.
+
+    The decorated name remains bound to the same callable, while the collector stores a wrapper whose function is that callable.
+    """
     collector = Collector()
 
     @collector.filter
@@ -29,6 +39,11 @@ def test_collect_some_filter():
 
 
 def test_collect_some_converter():
+    """
+    Collects a converter registered with the bare collector decorator without replacing it.
+
+    The decorated function remains the original callable, and the collector records that callable as its converter for later use.
+    """
     collector = Collector()
 
     @collector.converter
@@ -39,6 +54,11 @@ def test_collect_some_converter():
 
 
 def test_add_two_collectors_with_converters():
+    """
+    Adding two collectors combines converter registrations in left-to-right order.
+
+    Before addition, each original collector contains only its own converter. The combined collector lists the left converter before the right converter.
+    """
     collector_1 = Collector()
     collector_2 = Collector()
 
@@ -59,6 +79,11 @@ def test_add_two_collectors_with_converters():
 
 
 def test_add_two_collectors_with_filters():
+    """
+    Adding two collectors combines their registered filters in left-to-right order.
+
+    Before addition, each original collector contains only its own filter. The combined collector lists the left callback before the right callback.
+    """
     collector_1 = Collector()
     collector_2 = Collector()
 
@@ -79,6 +104,11 @@ def test_add_two_collectors_with_filters():
 
 
 def test_add_wrong_things_to_collector():
+    """
+    Reject non-Collector operands when adding to a Collector.
+
+    Integer and string operands should both raise TypeError with the Collector-only diagnostic.
+    """
     with pytest.raises(TypeError, match=match('Collector objects can only be added to other collector objects.')):
         Collector() + 1
 
@@ -87,11 +117,21 @@ def test_add_wrong_things_to_collector():
 
 
 def test_repr():
+    """
+    Pin Collector repr output for default and non-empty constructor metadata.
+
+    A default collector renders as `Collector()`, while a collector with metadata includes it as the `meta` keyword using the dictionary repr.
+    """
     assert repr(Collector()) == 'Collector()'
     assert repr(Collector(meta={'lol': 'kek'})) == "Collector(meta={'lol': 'kek'})"
 
 
 def test_meta_for_collector_but_not_for_converter_or_filter():
+    """
+    Bare converter and filter registrations inherit collector-level metadata.
+
+    Each collected wrapper receives metadata equal to the Collector constructor dictionary while holding its own top-level copy, so neither wrapper reuses the caller's original dictionary.
+    """
     meta = {'lol': 'kek'}
     collector = Collector(meta=meta)
 
@@ -111,6 +151,11 @@ def test_meta_for_collector_but_not_for_converter_or_filter():
 
 
 def test_meta_for_converter_or_filter_but_not_for_collector():
+    """
+    Stores decorator-level metadata on collected converter and filter wrappers.
+
+    A collector created without constructor metadata should attach equal but top-level copied meta dictionaries to wrappers registered with converter- and filter-level meta.
+    """
     meta = {'lol': 'kek'}
     collector = Collector()
 
@@ -130,6 +175,11 @@ def test_meta_for_converter_or_filter_but_not_for_collector():
 
 
 def test_meta_for_for_converter_or_filter_and_for_collector():
+    """
+    Registers merged collector and decorator metadata for converters and filters.
+
+    Decorator metadata overrides collector metadata for duplicate keys, and each wrapper receives a copied top-level metadata dictionary rather than either original input dictionary.
+    """
     meta_1 = {'lol_1': 'kek_1', 'lol_2': 'kek_2'}
     meta_2 = {'lol_2': 'kek_2-2', 'lol_3': 'kek_3'}
 
