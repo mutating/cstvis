@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cstvis"
-version = "0.0.8"
+version = "0.0.9"
 authors = [{ name = "Evgeniy Blinov", email = "zheni-b@yandex.ru" }]
 description = 'Incremental change of CST'
 readme = "README.md"
@@ -14,7 +14,7 @@ dependencies = [
     'sigmatch>=0.0.10',
     'metacode>=0.0.7',
     "libcst>=1.1.0 ; python_version == '3.8'",
-    "libcst>=1.8.6 ; python_version > '3.8'",
+    "libcst>=1.9.0 ; python_version > '3.8'",
 ]
 classifiers = [
     "Operating System :: OS Independent",
