@@ -14,7 +14,7 @@ dependencies = [
     'sigmatch>=0.0.10',
     'metacode>=0.0.7',
     "libcst>=1.1.0 ; python_version == '3.8'",
-    "libcst>=1.8.6 ; python_version > '3.8'",
+    "libcst>=1.9.0 ; python_version > '3.8'",
 ]
 classifiers = [
     "Operating System :: OS Independent",
