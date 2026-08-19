@@ -1,3 +1,4 @@
+from dataclasses import replace
 from typing import (
     Any,
     Callable,
@@ -42,8 +43,8 @@ class CallableWrapper(Generic[FilterOrConverterReturnValue]):
 
     def __call__(self, node: CSTNode, context: Context) -> FilterOrConverterReturnValue:
         if PossibleCallMatcher('..').match(self.function):
-            context.meta = self.meta.copy() if isinstance(self.meta, dict) else None
-            return self.function(node, context)  # type: ignore[call-arg]
+            callback_context = replace(context, meta=self.meta.copy() if isinstance(self.meta, dict) else None)
+            return self.function(node, callback_context)  # type: ignore[call-arg]
 
         return self.function(node)  # type: ignore[call-arg]
 
