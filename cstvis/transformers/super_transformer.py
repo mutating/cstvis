@@ -1,40 +1,13 @@
-from typing import Any, Callable, Dict, List, Set, Type
+from typing import Dict, List, Type
 
-import libcst.matchers as matchers_module
-from libcst import CSTNode, metadata
-from libcst.matchers import (
-    BaseMatcherNode,
-    MatcherDecoratableTransformer,
-    TypeOf,
-    leave,
-)
+from libcst import CSTNode, CSTTransformer, metadata
 
 from cstvis.dto import Context, Coordinate, SourcePosition
 from cstvis.source_offsets import SourceOffsetResolver
 from cstvis.wrapper import CallableWrapper
 
 
-def get_all_matcher_nodes() -> List[BaseMatcherNode]:
-    result = []
-
-    for name in dir(matchers_module):
-        attribute = getattr(matchers_module, name)
-        try:
-            if issubclass(attribute, BaseMatcherNode) and attribute is not BaseMatcherNode and attribute is not TypeOf:
-                result.append(attribute())
-        except TypeError:
-            pass
-
-    return result
-
-def leave_all(function: Callable[[Any, CSTNode, CSTNode], CSTNode]) -> Callable[[Any, CSTNode, CSTNode], CSTNode]:
-    for matcher in get_all_matcher_nodes():
-        function = leave(matcher)(function)
-
-    return function
-
-
-class SuperTransformer(MatcherDecoratableTransformer):
+class SuperTransformer(CSTTransformer):
     """
     Apply one conversion with positions from the original node.
 
@@ -50,23 +23,17 @@ class SuperTransformer(MatcherDecoratableTransformer):
         target_coordinate: Coordinate,
         nodes_mapping: Dict[Type[CSTNode], List[CallableWrapper[CSTNode]]],
         comments: Dict[int, str],
-        nodes_ids: Set[int],
         source_offsets: SourceOffsetResolver,
     ):
         self.target_coordinate = target_coordinate
         self.nodes_mapping = nodes_mapping
         self.comments = comments
-        self.nodes_ids = nodes_ids
         self.source_offsets = source_offsets
 
         super().__init__()
 
-    @leave_all
-    def leave(self, original_node, updated_node):  # type: ignore[no-untyped-def]
-        if id(original_node) in self.nodes_ids:
-            return updated_node
-        self.nodes_ids.add(id(original_node))
-
+    # LibCST's generic signature cannot express supported cross-type replacements.
+    def on_leave(self, original_node: CSTNode, updated_node: CSTNode) -> CSTNode:  # type: ignore[override]
         converters = self.nodes_mapping.get(type(original_node), []) + self.nodes_mapping.get(CSTNode, [])  # type: ignore[type-abstract]
         if not converters:
             return updated_node
