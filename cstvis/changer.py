@@ -76,5 +76,5 @@ class Changer:
     def apply_coordinate(self, coordinate: Coordinate) -> str:
         wrapper = metadata.MetadataWrapper(self.module)
         node_ranges = wrapper.resolve(metadata.WhitespaceInclusivePositionProvider)
-        modified = wrapper.visit(SuperTransformer(coordinate, self.converters_by_types, self._comments_by_lines, set(), SourceOffsetResolver(wrapper.module, self.source, node_ranges.values())))
+        modified = wrapper.visit(SuperTransformer(coordinate, self.converters_by_types, self._comments_by_lines, SourceOffsetResolver(wrapper.module, self.source, node_ranges.values())))
         return modified.code
