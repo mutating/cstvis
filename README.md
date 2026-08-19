@@ -168,9 +168,14 @@ def change_add(node: Add, context: Context):  # <- The function takes a second a
     )
 ```
 
-The context object has two main fields and one useful method:
+The frozen `Context` dataclass provides the following attributes and method:
 
-- `coordinate` with fields `start_line: int`, `start_column: int`, `end_line: int`, `end_column: int` and some others — identifies the current location in the code.
+- `position: SourcePosition` — the node’s position in the original source. It provides:
+  - `coordinate` with fields `start_line: int`, `start_column: int`, `end_line: int`, `end_column: int` and some others — identifies the current syntactic location in the code;
+  - `source` — the complete original source passed to `Changer`;
+  - `node_range` — the node’s [`WhitespaceInclusivePositionProvider`](https://libcst.readthedocs.io/en/latest/metadata.html#libcst.metadata.WhitespaceInclusivePositionProvider) range, including whitespace owned by that node;
+  - `start_offset: int` and `end_offset: int` — the lazily computed inclusive start and exclusive end indices of that range in Python characters;
+  - `code_before` and `code_after` — the lazily computed source text before and after that range.
 - `comment` — the comment on the node’s first line, if there is one, without the leading `#`, or `None` if there is no comment.
 - `get_metacodes(key: Union[str, List[str]]) -> List[ParsedComment]` — a method that returns a list of parsed comments in [metacode format](https://github.com/mutating/metacode) associated with the current line of code.
 

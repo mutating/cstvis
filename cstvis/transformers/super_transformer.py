@@ -9,7 +9,8 @@ from libcst.matchers import (
     leave,
 )
 
-from cstvis.dto import Context, Coordinate
+from cstvis.dto import Context, Coordinate, SourcePosition
+from cstvis.source_offsets import SourceOffsetResolver
 from cstvis.wrapper import CallableWrapper
 
 
@@ -34,7 +35,15 @@ def leave_all(function: Callable[[Any, CSTNode, CSTNode], CSTNode]) -> Callable[
 
 
 class SuperTransformer(MatcherDecoratableTransformer):
-    METADATA_DEPENDENCIES = (metadata.PositionProvider,)
+    """
+    Apply one conversion with positions from the original node.
+
+    Public coordinates use ``PositionProvider``; contextual ranges use the
+    additional ``WhitespaceInclusivePositionProvider`` metadata pass. Reading
+    ``Context.position`` later resolves the original node's source offsets.
+    """
+
+    METADATA_DEPENDENCIES = (metadata.PositionProvider, metadata.WhitespaceInclusivePositionProvider)
 
     def __init__(
         self,
@@ -42,11 +51,13 @@ class SuperTransformer(MatcherDecoratableTransformer):
         nodes_mapping: Dict[Type[CSTNode], List[CallableWrapper[CSTNode]]],
         comments: Dict[int, str],
         nodes_ids: Set[int],
+        source_offsets: SourceOffsetResolver,
     ):
         self.target_coordinate = target_coordinate
         self.nodes_mapping = nodes_mapping
         self.comments = comments
         self.nodes_ids = nodes_ids
+        self.source_offsets = source_offsets
 
         super().__init__()
 
@@ -55,6 +66,10 @@ class SuperTransformer(MatcherDecoratableTransformer):
         if id(original_node) in self.nodes_ids:
             return updated_node
         self.nodes_ids.add(id(original_node))
+
+        converters = self.nodes_mapping.get(type(original_node), []) + self.nodes_mapping.get(CSTNode, [])  # type: ignore[type-abstract]
+        if not converters:
+            return updated_node
 
         position = self.get_metadata(metadata.PositionProvider, original_node)
         coordinate = Coordinate(
@@ -74,11 +89,13 @@ class SuperTransformer(MatcherDecoratableTransformer):
             end_column=self.target_coordinate.end_column,
         )
 
-        converters = self.nodes_mapping.get(type(original_node), []) + self.nodes_mapping.get(CSTNode, [])  # type: ignore[type-abstract]
-
-        if coordinate == target_coordinate_without_converter_id and converters:
-            context = Context(coordinate, self.comments.get(coordinate.start_line))
+        if coordinate == target_coordinate_without_converter_id:
             for converter in converters:  # pragma: no branch
                 if converter.get_function_id() == self.target_coordinate.converter_id:
+                    node_range = self.get_metadata(metadata.WhitespaceInclusivePositionProvider, original_node)
+                    context = Context(
+                        SourcePosition(coordinate, self.source_offsets.source, node_range, self.source_offsets),
+                        self.comments.get(coordinate.start_line),
+                    )
                     return converter(updated_node, context)
         return updated_node
