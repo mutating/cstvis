@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cstvis"
-version = "0.0.10"
+version = "0.0.11"
 authors = [{ name = "Evgeniy Blinov", email = "zheni-b@yandex.ru" }]
 description = 'Incremental change of CST'
 readme = "README.md"
@@ -30,6 +30,7 @@ classifiers = [
     'Programming Language :: Python :: 3.12',
     'Programming Language :: Python :: 3.13',
     'Programming Language :: Python :: 3.14',
+    'Programming Language :: Python :: 3.15',
     'Programming Language :: Python :: Free Threading',
     'Programming Language :: Python :: Free Threading :: 3 - Stable',
     'License :: OSI Approved :: MIT License',

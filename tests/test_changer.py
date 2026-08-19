@@ -1058,29 +1058,41 @@ def test_convert_plus_one(with_context, unfold):
     assert set(changer.apply_coordinate(coordinate) for coordinate in changer.iterate_coordinates()) == {'6 - 5 + 5', '5 - 6 + 5', '5 - 5 + 6'}
 
 
-def test_converter_for_any(with_context, unfold):
+def test_any_converter_is_invoked_once_per_coordinate(with_context, unfold):
     """
-    An Any-annotated converter is considered for many CST nodes.
+    Invoke an `Any` converter exactly once per independently applied coordinate.
 
-    Applying every coordinate in `Changer('5 - 5 + 5')` invokes the identity converter more than ten times across node-only/context-aware callbacks and both decorator forms.
+    The captured node's type must match the coordinate's class name, and identity
+    conversion must preserve the source. Both callback signatures and decorator
+    forms are covered.
     """
-    changer = Changer('5 - 5 + 5')
+    source = '5 - 5 + 5'
+    changer = Changer(source)
 
-    nodes = []
+    captured_nodes = []
 
     if with_context:
         @unfold(changer.converter)
-        def do_something(node: Any, context):  # noqa: ARG001
-            nodes.append(nodes)
+        def capture_node(node: Any, context):  # noqa: ARG001
+            captured_nodes.append(node)
             return node
     else:
         @unfold(changer.converter)
-        def do_something(node: Any):
-            nodes.append(nodes)
+        def capture_node(node: Any):
+            captured_nodes.append(node)
             return node
 
-    [changer.apply_coordinate(coordinate) for coordinate in changer.iterate_coordinates()]
-    assert len(nodes) > 10
+    coordinates = list(changer.iterate_coordinates())
+    assert len(coordinates) > 10
+
+    for coordinate in coordinates:
+        call_count_before = len(captured_nodes)
+        assert changer.apply_coordinate(coordinate) == source
+
+        assert len(captured_nodes) == call_count_before + 1
+        assert captured_nodes[-1].__class__.__name__ == coordinate.class_name
+
+    assert len(captured_nodes) == len(coordinates)
 
 
 def test_if_node_is_not_exist_nothing_changed(with_context, unfold):
@@ -1122,8 +1134,8 @@ def test_get_function_id_from_itself(unfold):
     converter = list(changer.converters_by_types.values())[0][0]  # noqa: RUF015
     filter = list(changer.filters_by_types.values())[0][0]  # noqa: RUF015, A001
 
-    assert converter.get_function_id() == 'tests.test_changer:do_something:1114'
-    assert filter.get_function_id() == 'tests.test_changer:filter_something:1118'
+    assert converter.get_function_id() == 'tests.test_changer:do_something:1126'
+    assert filter.get_function_id() == 'tests.test_changer:filter_something:1130'
 
 
 def test_wrong_converter_and_wrong_filter(unfold):

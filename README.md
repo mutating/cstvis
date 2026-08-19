@@ -199,7 +199,7 @@ for x in changer.iterate_coordinates():
     print(x)
     print(changer.apply_coordinate(x))
 
-#> Coordinate(file=None, class_name='SimpleString', start_line=1, start_column=4, end_line=1, end_column=9, converter_id='__main__:change_string:13')
+#> Coordinate(file=None, class_name='SimpleString', start_line=1, start_column=4, end_line=1, end_column=16, converter_id='__main__:change_string:10')
 #> a = "new string"
 ```
 
