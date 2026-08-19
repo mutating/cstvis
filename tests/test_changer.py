@@ -1,14 +1,16 @@
-# ruff: noqa: ARG001
-
-from typing import Any, Union
+from typing import Any, List, Union
+from unittest.mock import patch
 
 import pytest
 from full_match import match
 from libcst import Add, CSTNode, Multiply, SimpleString, Subtract
+from libcst.metadata import CodePosition, CodeRange
 from metacode import ParsedComment
 from sigmatch import SignatureMismatchError
 
-from cstvis import Changer, Collector, Context
+import cstvis.source_offsets as source_offsets_module
+from cstvis import Changer, Collector, Context, Coordinate
+from cstvis.source_offsets import SourceOffsetResolver
 
 
 @pytest.mark.parametrize(
@@ -34,11 +36,11 @@ def test_just_iterate_add_coordinates(file, with_context, unfold):
 
     if with_context:
         @unfold(changer.converter)
-        def name_changer(node: Add, context: Context):
+        def name_changer(node: Add, context: Context):  # noqa: ARG001
             return True
     else:
         @unfold(changer.converter)
-        def name_changer(node: Add):
+        def name_changer(node: Add):  # noqa: ARG001
             return True
 
     coordinates = list(changer.iterate_coordinates())
@@ -84,7 +86,7 @@ def test_iterate_coordinates_filters_matching_add_without_calling_converter(file
         return node
 
     @changer.filter
-    def filter_second_add(node: Add, context: Context) -> bool:
+    def filter_second_add(node: Add, context: Context) -> bool:  # noqa: ARG001
         return context.position.coordinate.start_line == 2
 
     coordinates = list(changer.iterate_coordinates())
@@ -115,7 +117,7 @@ def test_apply_one_change(file, with_context, unfold):
 
     if with_context:
         @unfold(changer.converter)
-        def change_add_to_sub(node: Add, context: Context):
+        def change_add_to_sub(node: Add, context: Context):  # noqa: ARG001
             return Subtract(
                 whitespace_before=node.whitespace_before,
                 whitespace_after=node.whitespace_after,
@@ -155,7 +157,7 @@ def test_apply_two_changes_at_same_line(file, with_context, unfold):
 
     if with_context:
         @unfold(changer.converter)
-        def change_add_to_sub(node: Add, context: Context):
+        def change_add_to_sub(node: Add, context: Context):  # noqa: ARG001
             return Subtract(
                 whitespace_before=node.whitespace_before,
                 whitespace_after=node.whitespace_after,
@@ -199,14 +201,14 @@ def test_to_different_changers_to_same_line(file, with_context, unfold):
 
     if with_context:
         @unfold(changer.converter)
-        def change_add_to_sub(node: Add, context: Context):
+        def change_add_to_sub(node: Add, context: Context):  # noqa: ARG001
             return Subtract(
                 whitespace_before=node.whitespace_before,
                 whitespace_after=node.whitespace_after,
             )
 
         @unfold(changer.converter)
-        def change_sub_to_add(node: Subtract, context: Context):
+        def change_sub_to_add(node: Subtract, context: Context):  # noqa: ARG001
             return Add(
                 whitespace_before=node.whitespace_before,
                 whitespace_after=node.whitespace_after,
@@ -256,7 +258,7 @@ def test_changing_function_with_wrong_number_of_parameters(file, unfold):
 
     with pytest.raises(SignatureMismatchError, match=match('A function that takes a CST node and a context is expected.')):
         @unfold(changer.converter)
-        def changing_function_1(node: Add, context: Context, something_else: str):
+        def changing_function_1(node: Add, context: Context, something_else: str):  # noqa: ARG001
             return Subtract(
                 whitespace_before=node.whitespace_before,
                 whitespace_after=node.whitespace_after,
@@ -354,14 +356,14 @@ def test_filter_any_on(file, with_context, unfold):
 
     if with_context:
         @unfold(changer.converter)
-        def change_something(node: Add, context: Context):
+        def change_something(node: Add, context: Context):  # noqa: ARG001
             return Subtract(
                 whitespace_before=node.whitespace_before,
                 whitespace_after=node.whitespace_after,
             )
 
         @unfold(changer.filter)
-        def filter_something(node: Any, context: Context) -> bool:
+        def filter_something(node: Any, context: Context) -> bool:  # noqa: ARG001
             return True
 
     else:
@@ -373,7 +375,7 @@ def test_filter_any_on(file, with_context, unfold):
             )
 
         @unfold(changer.filter)
-        def filter_something(node: Any) -> bool:
+        def filter_something(node: Any) -> bool:  # noqa: ARG001
             return True
 
     results = []
@@ -403,14 +405,14 @@ def test_filter_any_off(file, with_context, unfold):
 
     if with_context:
         @unfold(changer.converter)
-        def change_something(node: Add, context: Context):
+        def change_something(node: Add, context: Context):  # noqa: ARG001
             return Subtract(
                 whitespace_before=node.whitespace_before,
                 whitespace_after=node.whitespace_after,
             )
 
         @unfold(changer.filter)
-        def filter_something(node: Any, context: Context) -> bool:
+        def filter_something(node: Any, context: Context) -> bool:  # noqa: ARG001
             return False
 
     else:
@@ -422,7 +424,7 @@ def test_filter_any_off(file, with_context, unfold):
             )
 
         @unfold(changer.filter)
-        def filter_something(node: Any) -> bool:
+        def filter_something(node: Any) -> bool:  # noqa: ARG001
             return False
 
     results = []
@@ -451,14 +453,14 @@ def test_filter_cstnode_on(file, with_context, unfold):
 
     if with_context:
         @unfold(changer.converter)
-        def change_something(node: Add, context: Context):
+        def change_something(node: Add, context: Context):  # noqa: ARG001
             return Subtract(
                 whitespace_before=node.whitespace_before,
                 whitespace_after=node.whitespace_after,
             )
 
         @unfold(changer.filter)
-        def filter_something(node: CSTNode, context: Context) -> bool:
+        def filter_something(node: CSTNode, context: Context) -> bool:  # noqa: ARG001
             return True
 
     else:
@@ -470,7 +472,7 @@ def test_filter_cstnode_on(file, with_context, unfold):
             )
 
         @unfold(changer.filter)
-        def filter_something(node: CSTNode) -> bool:
+        def filter_something(node: CSTNode) -> bool:  # noqa: ARG001
             return True
 
     results = []
@@ -500,14 +502,14 @@ def test_filter_cstnode_off(file, with_context, unfold):
 
     if with_context:
         @unfold(changer.converter)
-        def change_something(node: Add, context: Context):
+        def change_something(node: Add, context: Context):  # noqa: ARG001
             return Subtract(
                 whitespace_before=node.whitespace_before,
                 whitespace_after=node.whitespace_after,
             )
 
         @unfold(changer.filter)
-        def filter_something(node: CSTNode, context: Context) -> bool:
+        def filter_something(node: CSTNode, context: Context) -> bool:  # noqa: ARG001
             return False
 
     else:
@@ -519,7 +521,7 @@ def test_filter_cstnode_off(file, with_context, unfold):
             )
 
         @unfold(changer.filter)
-        def filter_something(node: CSTNode) -> bool:
+        def filter_something(node: CSTNode) -> bool:  # noqa: ARG001
             return False
 
     results = []
@@ -548,14 +550,14 @@ def test_filter_node_on(file, with_context, unfold):
 
     if with_context:
         @unfold(changer.converter)
-        def change_something(node: Add, context: Context):
+        def change_something(node: Add, context: Context):  # noqa: ARG001
             return Subtract(
                 whitespace_before=node.whitespace_before,
                 whitespace_after=node.whitespace_after,
             )
 
         @unfold(changer.filter)
-        def filter_something(node: Add, context: Context) -> bool:
+        def filter_something(node: Add, context: Context) -> bool:  # noqa: ARG001
             return True
 
     else:
@@ -567,7 +569,7 @@ def test_filter_node_on(file, with_context, unfold):
             )
 
         @unfold(changer.filter)
-        def filter_something(node: Add) -> bool:
+        def filter_something(node: Add) -> bool:  # noqa: ARG001
             return True
 
     results = []
@@ -597,14 +599,14 @@ def test_filter_node_off(file, with_context, unfold):
 
     if with_context:
         @unfold(changer.converter)
-        def change_something(node: Add, context: Context):
+        def change_something(node: Add, context: Context):  # noqa: ARG001
             return Subtract(
                 whitespace_before=node.whitespace_before,
                 whitespace_after=node.whitespace_after,
             )
 
         @unfold(changer.filter)
-        def filter_something(node: Add, context: Context) -> bool:
+        def filter_something(node: Add, context: Context) -> bool:  # noqa: ARG001
             return False
 
     else:
@@ -616,7 +618,7 @@ def test_filter_node_off(file, with_context, unfold):
             )
 
         @unfold(changer.filter)
-        def filter_something(node: Add) -> bool:
+        def filter_something(node: Add) -> bool:  # noqa: ARG001
             return False
 
     results = []
@@ -645,14 +647,14 @@ def test_filter_other_node_on(file, with_context, unfold):
 
     if with_context:
         @unfold(changer.converter)
-        def change_something(node: Add, context: Context):
+        def change_something(node: Add, context: Context):  # noqa: ARG001
             return Subtract(
                 whitespace_before=node.whitespace_before,
                 whitespace_after=node.whitespace_after,
             )
 
         @unfold(changer.filter)
-        def filter_something(node: Subtract, context: Context) -> bool:
+        def filter_something(node: Subtract, context: Context) -> bool:  # noqa: ARG001
             return True
 
     else:
@@ -664,7 +666,7 @@ def test_filter_other_node_on(file, with_context, unfold):
             )
 
         @unfold(changer.filter)
-        def filter_something(node: Subtract) -> bool:
+        def filter_something(node: Subtract) -> bool:  # noqa: ARG001
             return True
 
     results = []
@@ -694,14 +696,14 @@ def test_filter_other_node_off(file, with_context, unfold):
 
     if with_context:
         @unfold(changer.converter)
-        def change_something(node: Add, context: Context):
+        def change_something(node: Add, context: Context):  # noqa: ARG001
             return Subtract(
                 whitespace_before=node.whitespace_before,
                 whitespace_after=node.whitespace_after,
             )
 
         @unfold(changer.filter)
-        def filter_something(node: Subtract, context: Context) -> bool:
+        def filter_something(node: Subtract, context: Context) -> bool:  # noqa: ARG001
             return False
 
     else:
@@ -713,7 +715,7 @@ def test_filter_other_node_off(file, with_context, unfold):
             )
 
         @unfold(changer.filter)
-        def filter_something(node: Subtract) -> bool:
+        def filter_something(node: Subtract) -> bool:  # noqa: ARG001
             return False
 
     results = []
@@ -735,7 +737,7 @@ def test_converter_with_no_annotation(with_context, unfold):
 
     if with_context:
         @unfold(changer.converter)
-        def converter_func(node, context):
+        def converter_func(node, context):  # noqa: ARG001
             return node
     else:
         @unfold(changer.converter)
@@ -755,7 +757,7 @@ def test_converter_with_any_annotation(with_context, unfold):
 
     if with_context:
         @unfold(changer.converter)
-        def converter_func(node: Any, context):
+        def converter_func(node: Any, context):  # noqa: ARG001
             return node
     else:
         @unfold(changer.converter)
@@ -775,7 +777,7 @@ def test_converter_with_cstnode_annotation_restriction(with_context, unfold):
 
     if with_context:
         @unfold(changer.converter)
-        def converter_func(node: CSTNode, context):
+        def converter_func(node: CSTNode, context):  # noqa: ARG001
             return node
     else:
         @unfold(changer.converter)
@@ -797,7 +799,7 @@ def test_convert_str(with_context, unfold):
 
     if with_context:
         @unfold(changer.converter)
-        def converter_func(node: str, context: Context):
+        def converter_func(node: str, context: Context):  # noqa: ARG001
             nodes.append(node)
             return node
     else:
@@ -823,7 +825,7 @@ def test_convert_float(with_context, unfold):
 
     if with_context:
         @unfold(changer.converter)
-        def converter_func(node: float, context: Context):
+        def converter_func(node: float, context: Context):  # noqa: ARG001
             return node.with_changes(value=repr(node.evaluated_value + 1))  # type: ignore[attr-defined]
     else:
         @unfold(changer.converter)
@@ -846,7 +848,7 @@ def test_filter_with_wrong_number_of_parameters(unfold):
 
     with pytest.raises(SignatureMismatchError, match=match('A function that takes a CST node and a context is expected.')):
         @unfold(changer.filter)
-        def filter_func(node: Add, context: Context, extra_param: str):
+        def filter_func(node: Add, context: Context, extra_param: str):  # noqa: ARG001
             return True
 
     with pytest.raises(SignatureMismatchError, match=match('A function that takes a CST node and a context is expected.')):
@@ -868,7 +870,7 @@ def test_filter_with_invalid_annotation(unfold):
 
     with pytest.raises(TypeError, match=match('The type annotation for the first argument of the function must be descended from the libcst.CSTNode class.')):
         @unfold(changer.filter)
-        def filter_func(node: SomeClass, context: Context):
+        def filter_func(node: SomeClass, context: Context):  # noqa: ARG001
             return True
 
 
@@ -882,14 +884,14 @@ def test_two_converters_for_same_node(with_context, unfold):
 
     if with_context:
         @unfold(changer.converter)
-        def converter1(node: Add, context: Context):
+        def converter1(node: Add, context: Context):  # noqa: ARG001
             return Subtract(
                 whitespace_before=node.whitespace_before,
                 whitespace_after=node.whitespace_after,
             )
 
         @unfold(changer.converter)
-        def converter2(node: Add, context: Context):
+        def converter2(node: Add, context: Context):  # noqa: ARG001
             return Multiply(
                 whitespace_before=node.whitespace_before,
                 whitespace_after=node.whitespace_after,
@@ -923,7 +925,7 @@ def test_use_collector_for_converter(with_context, unfold):
 
     if with_context:
         @unfold(collector.converter)
-        def some_converter(node: Add, context: Context):
+        def some_converter(node: Add, context: Context):  # noqa: ARG001
             return Subtract(
                 whitespace_before=node.whitespace_before,
                 whitespace_after=node.whitespace_after,
@@ -953,14 +955,14 @@ def test_use_collector_for_converter_and_filter(with_context, unfold):
 
     if with_context:
         @unfold(collector.converter)
-        def some_converter(node: Add, context: Context):
+        def some_converter(node: Add, context: Context):  # noqa: ARG001
             return Subtract(
                 whitespace_before=node.whitespace_before,
                 whitespace_after=node.whitespace_after,
             )
 
         @unfold(collector.filter)
-        def some_filter(node: Add, context: Context):
+        def some_filter(node: Add, context: Context):  # noqa: ARG001
             return filters_value
 
     else:
@@ -972,7 +974,7 @@ def test_use_collector_for_converter_and_filter(with_context, unfold):
             )
 
         @unfold(collector.filter)
-        def some_filter(node: Add):
+        def some_filter(node: Add):  # noqa: ARG001
             return filters_value
 
     changer = Changer('a = 5 + 5', collector=collector)
@@ -994,7 +996,7 @@ def test_union_with_csts(with_context, unfold):
 
     if with_context:
         @unfold(changer.converter)
-        def some_converter(node: Union[Add, Subtract], context: Context):
+        def some_converter(node: Union[Add, Subtract], context: Context):  # noqa: ARG001
             return Multiply(
                 whitespace_before=node.whitespace_before,
                 whitespace_after=node.whitespace_after,
@@ -1020,7 +1022,7 @@ def test_union_with_union_with_csts(with_context, unfold):
 
     if with_context:
         @unfold(changer.converter)
-        def some_converter(node: Union[Add, Union[Multiply, Subtract]], context: Context):
+        def some_converter(node: Union[Add, Union[Multiply, Subtract]], context: Context):  # noqa: ARG001
             return Multiply(
                 whitespace_before=node.whitespace_before,
                 whitespace_after=node.whitespace_after,
@@ -1046,7 +1048,7 @@ def test_convert_plus_one(with_context, unfold):
 
     if with_context:
         @unfold(changer.converter)
-        def convert_ints(node: int, context):
+        def convert_ints(node: int, context):  # noqa: ARG001
             return node.with_changes(value=repr(node.evaluated_value + 1))  # type: ignore[attr-defined]
     else:
         @unfold(changer.converter)
@@ -1068,7 +1070,7 @@ def test_converter_for_any(with_context, unfold):
 
     if with_context:
         @unfold(changer.converter)
-        def do_something(node: Any, context):
+        def do_something(node: Any, context):  # noqa: ARG001
             nodes.append(nodes)
             return node
     else:
@@ -1091,7 +1093,7 @@ def test_if_node_is_not_exist_nothing_changed(with_context, unfold):
 
     if with_context:
         @unfold(changer.converter)
-        def do_something(node: float, context):
+        def do_something(node: float, context):  # noqa: ARG001
             return node
     else:
         @unfold(changer.converter)
@@ -1110,18 +1112,18 @@ def test_get_function_id_from_itself(unfold):
     changer = Changer('5 - 5 + 5')
 
     @unfold(changer.converter)
-    def do_something(node: float, context):
+    def do_something(node: float, context):  # noqa: ARG001
         return node
 
     @unfold(changer.filter)
-    def filter_something(node: float, context):
+    def filter_something(node: float, context):  # noqa: ARG001
         return False
 
     converter = list(changer.converters_by_types.values())[0][0]  # noqa: RUF015
     filter = list(changer.filters_by_types.values())[0][0]  # noqa: RUF015, A001
 
-    assert converter.get_function_id() == 'tests.test_changer:do_something:1112'
-    assert filter.get_function_id() == 'tests.test_changer:filter_something:1116'
+    assert converter.get_function_id() == 'tests.test_changer:do_something:1114'
+    assert filter.get_function_id() == 'tests.test_changer:filter_something:1118'
 
 
 def test_wrong_converter_and_wrong_filter(unfold):
@@ -1149,7 +1151,7 @@ def test_wrong_converter_and_wrong_filter(unfold):
 
     with pytest.raises(SignatureMismatchError, match=match('A function that takes a CST node and a context is expected.')):
         @unfold(changer.filter)
-        def filter_something_2(a, b, c):
+        def filter_something_2(a, b, c):  # noqa: ARG001
             return False
 
 
@@ -1195,7 +1197,7 @@ def test_pass_meta_dict_to_filter(unfold):
         )
 
     @changer.filter(meta=meta)
-    def filter_something(node: Add, context: Context):
+    def filter_something(node: Add, context: Context):  # noqa: ARG001
         bread_crumbs.append(context.meta)
         return False
 
@@ -1248,7 +1250,7 @@ def test_pass_meta_dict_to_filter_throw_collector(unfold):
         )
 
     @collector.filter(meta=meta)
-    def filter_something(node: Add, context: Context):
+    def filter_something(node: Add, context: Context):  # noqa: ARG001
         bread_crumbs.append(context.meta)
         return False
 
@@ -1279,3 +1281,384 @@ def test_it_passes_2_arguments_if_possible(unfold):
 
     assert len(contexts) == 1
     assert isinstance(contexts[0], Context)
+
+
+def test_filter_context_exposes_whitespace_inclusive_fragments():
+    """
+    Context.position exposes an Add's whitespace-inclusive range, offsets, and fragments to filters.
+
+    The ordinary coordinate remains limited to the '+' token.
+    """
+    source = 'left = 1  +\t2 # tail\r\nright = 3\n'
+    changer = Changer(source)
+    contexts = []
+
+    @changer.converter
+    def convert(node: Add) -> Add:
+        return node
+
+    @changer.filter
+    def capture(node: Add, context: Context) -> bool:  # noqa: ARG001
+        contexts.append(context)
+        return True
+
+    assert len(list(changer.iterate_coordinates())) == 1
+    assert len(contexts) == 1
+    context = contexts[0]
+    assert context.position.coordinate == Coordinate(None, 'Add', 1, 10, 1, 11)
+    assert context.position.node_range == CodeRange(CodePosition(1, 8), CodePosition(1, 12))
+    assert context.position.start_offset == 8
+    assert context.position.end_offset == 12
+    assert context.position.code_before == 'left = 1'
+    assert context.position.code_after == '2 # tail\r\nright = 3\n'
+    assert context.position.code_before + '  +\t' + context.position.code_after == context.position.source
+
+
+def test_converter_context_exposes_original_fragments():
+    """
+    A converter's Context.position retains the original Add's range, offsets, and fragments after replacement.
+    """
+    source = 'left = 1  +\t2 # tail\r\nright = 3\n'
+    changer = Changer(source)
+    contexts = []
+
+    @changer.converter
+    def convert(node: Add, context: Context) -> Subtract:
+        contexts.append(context)
+        return Subtract(whitespace_before=node.whitespace_before, whitespace_after=node.whitespace_after)
+
+    coordinate = next(changer.iterate_coordinates())
+    transformed_source = changer.apply_coordinate(coordinate)
+
+    assert transformed_source == 'left = 1  -\t2 # tail\r\nright = 3\n'
+    assert len(contexts) == 1
+    context = contexts[0]
+    assert context.position.coordinate == Coordinate(None, 'Add', 1, 10, 1, 11)
+    assert context.position.node_range == CodeRange(CodePosition(1, 8), CodePosition(1, 12))
+    assert context.position.start_offset == 8
+    assert context.position.end_offset == 12
+    assert context.position.code_before == 'left = 1'
+    assert context.position.code_after == '2 # tail\r\nright = 3\n'
+    assert context.position.code_before + '  +\t' + context.position.code_after == context.position.source
+
+
+@pytest.mark.parametrize('callback_kind', ['filter', 'converter'])
+def test_context_pipeline_does_not_materialize_unread_fragments(callback_kind):  # noqa: C901
+    """
+    Coordinate-only filter and converter callbacks neither resolve fragment offsets nor slice the source.
+    """
+    class TrackingString(str):
+        __slots__ = ('alignment_operations', 'slices')
+        alignment_operations: List[str]
+        slices: List[slice]
+
+        def __new__(cls, value: str):  # type: ignore[no-untyped-def]
+            instance = super().__new__(cls, value)
+            instance.alignment_operations = []
+            instance.slices = []
+            return instance
+
+        def __getitem__(self, key):  # type: ignore[no-untyped-def]
+            if isinstance(key, slice):
+                self.slices.append(key)
+            return super().__getitem__(key)
+
+        def find(self, substring, *args):  # type: ignore[no-untyped-def]
+            self.alignment_operations.append('find')
+            return super().find(substring, *args)
+
+        def startswith(self, prefix, *args):  # type: ignore[no-untyped-def]
+            self.alignment_operations.append('startswith')
+            return super().startswith(prefix, *args)
+
+    source = TrackingString('x = 1 + 2\n')
+    changer = Changer(source)
+    source.alignment_operations.clear()
+    source.slices.clear()
+    observed_coordinates = []
+
+    if callback_kind == 'filter':
+        @changer.converter
+        def convert(node: Add) -> Add:
+            return node
+
+        @changer.filter
+        def inspect_coordinate(node: Add, context: Context) -> bool:  # noqa: ARG001
+            observed_coordinates.append(context.position.coordinate)
+            return False
+    else:
+        @changer.converter
+        def convert(node: Add, context: Context) -> Subtract:
+            observed_coordinates.append(context.position.coordinate)
+            return Subtract(whitespace_before=node.whitespace_before, whitespace_after=node.whitespace_after)
+
+    alignment_ranges = []
+    resolve_offsets = SourceOffsetResolver.__call__
+
+    def track_alignment(resolver, node_range):  # type: ignore[no-untyped-def]
+        alignment_ranges.append(node_range)
+        return resolve_offsets(resolver, node_range)
+
+    with patch.object(SourceOffsetResolver, '__call__', track_alignment):
+        coordinates = list(changer.iterate_coordinates())
+        if callback_kind == 'filter':
+            assert coordinates == []
+        else:
+            assert len(coordinates) == 1
+            assert changer.apply_coordinate(coordinates[0]) == 'x = 1 - 2\n'
+
+    assert observed_coordinates == [Coordinate(None, 'Add', 1, 6, 1, 7)]
+    assert alignment_ranges == []
+    assert source.alignment_operations == []
+    assert source.slices == []
+
+
+@pytest.mark.parametrize('callback_kind', ['filter', 'converter'])
+def test_node_only_callbacks_do_not_materialize_context_fragments(callback_kind):
+    """
+    Node-only filter and converter callbacks neither resolve fragment offsets nor slice the source.
+    """
+    class TrackingString(str):
+        __slots__ = ('slices',)
+        slices: List[slice]
+
+        def __new__(cls, value: str):  # type: ignore[no-untyped-def]
+            instance = super().__new__(cls, value)
+            instance.slices = []
+            return instance
+
+        def __getitem__(self, key):  # type: ignore[no-untyped-def]
+            if isinstance(key, slice):
+                self.slices.append(key)
+            return super().__getitem__(key)
+
+    source = TrackingString('x = 1 + 2\n')
+    changer = Changer(source)
+    source.slices.clear()
+    converter_inputs = []
+    filter_inputs = []
+    alignment_ranges = []
+
+    @changer.converter
+    def convert(node: Add) -> Subtract:
+        converter_inputs.append(node)
+        return Subtract(whitespace_before=node.whitespace_before, whitespace_after=node.whitespace_after)
+
+    if callback_kind == 'filter':
+        @changer.filter
+        def reject(node: Add) -> bool:
+            filter_inputs.append(node)
+            return False
+
+    resolve_offsets = SourceOffsetResolver.__call__
+
+    def track_alignment(resolver, node_range):  # type: ignore[no-untyped-def]
+        alignment_ranges.append(node_range)
+        return resolve_offsets(resolver, node_range)
+
+    with patch.object(SourceOffsetResolver, '__call__', track_alignment):
+        coordinates = list(changer.iterate_coordinates())
+        if callback_kind == 'converter':
+            assert changer.apply_coordinate(coordinates[0]) == 'x = 1 - 2\n'
+
+    if callback_kind == 'filter':
+        assert coordinates == []
+        assert len(filter_inputs) == 1
+        assert isinstance(filter_inputs[0], Add)
+        assert converter_inputs == []
+    else:
+        assert len(coordinates) == 1
+        assert len(converter_inputs) == 1
+        assert isinstance(converter_inputs[0], Add)
+    assert alignment_ranges == []
+    assert source.slices == []
+
+
+@pytest.mark.parametrize('callback_kind', ['filter', 'converter'])
+@pytest.mark.parametrize('fragment_name', ['code_before', 'code_after'])
+def test_context_pipeline_materializes_only_requested_fragment(callback_kind, fragment_name):
+    """
+    Filter and converter paths resolve and slice only the requested fragment once despite repeated reads.
+    """
+    class TrackingString(str):
+        __slots__ = ('slices',)
+        slices: List[slice]
+
+        def __new__(cls, value: str):  # type: ignore[no-untyped-def]
+            instance = super().__new__(cls, value)
+            instance.slices = []
+            return instance
+
+        def __getitem__(self, key):  # type: ignore[no-untyped-def]
+            if isinstance(key, slice):
+                self.slices.append(key)
+            return super().__getitem__(key)
+
+    source = TrackingString('x = 1 + 2\n')
+    changer = Changer(source)
+    fragment_values = []
+    contexts = []
+    source.slices.clear()
+
+    if callback_kind == 'filter':
+        @changer.converter
+        def convert(node: Add) -> Add:
+            return node
+
+        @changer.filter
+        def read_fragment(node: Add, context: Context) -> bool:  # noqa: ARG001
+            contexts.append(context)
+            fragment_values.extend([getattr(context.position, fragment_name), getattr(context.position, fragment_name)])
+            return True
+    else:
+        @changer.converter
+        def convert(node: Add, context: Context) -> Add:
+            contexts.append(context)
+            fragment_values.extend([getattr(context.position, fragment_name), getattr(context.position, fragment_name)])
+            return node
+
+    alignment_ranges = []
+    resolve_offsets = SourceOffsetResolver.__call__
+
+    def track_alignment(resolver, node_range):  # type: ignore[no-untyped-def]
+        alignment_ranges.append(node_range)
+        return resolve_offsets(resolver, node_range)
+
+    with patch.object(SourceOffsetResolver, '__call__', track_alignment):
+        coordinates = list(changer.iterate_coordinates())
+        if callback_kind == 'converter':
+            changer.apply_coordinate(coordinates[0])
+
+    expected_fragment = 'x = 1' if fragment_name == 'code_before' else '2\n'
+    expected_slice = slice(None, 5) if fragment_name == 'code_before' else slice(8, None)
+    other_fragment_name = 'code_after' if fragment_name == 'code_before' else 'code_before'
+    assert len(contexts) == 1
+    assert fragment_name in contexts[0].position.__dict__
+    assert other_fragment_name not in contexts[0].position.__dict__
+    assert fragment_values == [expected_fragment, expected_fragment]
+    assert alignment_ranges == [CodeRange(CodePosition(1, 5), CodePosition(1, 8))]
+    assert source.slices == [expected_slice]
+
+
+@pytest.mark.parametrize('callback_kind', ['filter', 'converter'])
+def test_context_fragments_can_be_read_after_traversal(callback_kind):
+    """
+    A captured Context.position can resolve unread fragments after traversal and reconstruct the source.
+    """
+    class TrackingString(str):
+        __slots__ = ('slices',)
+        slices: List[slice]
+
+        def __new__(cls, value: str):  # type: ignore[no-untyped-def]
+            instance = super().__new__(cls, value)
+            instance.slices = []
+            return instance
+
+        def __getitem__(self, key):  # type: ignore[no-untyped-def]
+            if isinstance(key, slice):
+                self.slices.append(key)
+            return super().__getitem__(key)
+
+    source = TrackingString('x = 1 + 2\n')
+    changer = Changer(source)
+    contexts = []
+    source.slices.clear()
+
+    if callback_kind == 'filter':
+        @changer.converter
+        def convert(node: Add) -> Add:
+            return node
+
+        @changer.filter
+        def capture(node: Add, context: Context) -> bool:  # noqa: ARG001
+            contexts.append(context)
+            return True
+    else:
+        @changer.converter
+        def convert(node: Add, context: Context) -> Add:
+            contexts.append(context)
+            return node
+
+    coordinates = list(changer.iterate_coordinates())
+    if callback_kind == 'converter':
+        changer.apply_coordinate(coordinates[0])
+
+    assert source.slices == []
+    assert len(contexts) == 1
+    context = contexts[0]
+    assert context.position.node_range == CodeRange(CodePosition(1, 5), CodePosition(1, 8))
+    assert context.position.code_before == 'x = 1'
+    assert context.position.code_after == '2\n'
+    assert context.position.code_before + ' + ' + context.position.code_after == context.position.source
+
+
+def test_multiple_filters_receive_contexts_with_isolated_meta():
+    """
+    Filter Context copies share one SourcePosition while their mutable meta copies remain isolated.
+    """
+    source = 'x = 1 + 2\n'
+    changer = Changer(source)
+    first_filter_meta = {'filter': 1}
+    second_filter_meta = {'filter': 2}
+    contexts = []
+
+    @changer.converter
+    def convert(node: Add) -> Add:
+        return node
+
+    @changer.filter(meta=first_filter_meta)
+    def first_filter(node: Add, context: Context) -> bool:  # noqa: ARG001
+        assert context.meta is not None
+        context.meta['changed'] = True
+        contexts.append(context)
+        return True
+
+    @changer.filter(meta=second_filter_meta)
+    def second_filter(node: Add, context: Context) -> bool:  # noqa: ARG001
+        contexts.append(context)
+        return True
+
+    assert len(list(changer.iterate_coordinates())) == 1
+    assert len(contexts) == 2
+    assert contexts[0].position is contexts[1].position
+    assert contexts[0].meta == {'filter': 1, 'changed': True}
+    assert contexts[1].meta == {'filter': 2}
+    assert first_filter_meta == {'filter': 1}
+    assert second_filter_meta == {'filter': 2}
+    with patch('cstvis.source_offsets._SourceOffsetCodegenState', wraps=source_offsets_module._SourceOffsetCodegenState) as create_state:
+        for context in contexts:
+            assert context.position.node_range == CodeRange(CodePosition(1, 5), CodePosition(1, 8))
+            assert context.position.code_before == 'x = 1'
+            assert context.position.code_after == '2\n'
+            assert context.position.code_before + ' + ' + context.position.code_after == context.position.source
+        assert create_state.call_count == 1
+
+
+def test_multiple_converters_receive_equal_original_fragments():
+    """
+    Different Add replacements receive equal original fragments and produce distinct transformed sources.
+    """
+    source = 'x = 1 + 2\n'
+    changer = Changer(source)
+    contexts = []
+
+    @changer.converter
+    def subtract(node: Add, context: Context) -> Subtract:
+        contexts.append(context)
+        return Subtract(whitespace_before=node.whitespace_before, whitespace_after=node.whitespace_after)
+
+    @changer.converter
+    def multiply(node: Add, context: Context) -> Multiply:
+        contexts.append(context)
+        return Multiply(whitespace_before=node.whitespace_before, whitespace_after=node.whitespace_after)
+
+    transformed_sources = {changer.apply_coordinate(coordinate) for coordinate in changer.iterate_coordinates()}
+
+    assert transformed_sources == {'x = 1 - 2\n', 'x = 1 * 2\n'}
+    assert len(contexts) == 2
+    for context in contexts:
+        assert context.position.source == source
+        assert context.position.node_range == CodeRange(CodePosition(1, 5), CodePosition(1, 8))
+        assert context.position.code_before == 'x = 1'
+        assert context.position.code_after == '2\n'
+        assert context.position.code_before + ' + ' + context.position.code_after == context.position.source
