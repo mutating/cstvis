@@ -1,3 +1,4 @@
+import sys
 from dataclasses import FrozenInstanceError
 from typing import List
 from unittest.mock import patch
@@ -17,6 +18,8 @@ from cstvis.source_offsets import SourceOffsetResolver
 def test_context_requires_source_position_with_resolver():
     """
     Context requires SourcePosition, which requires coordinate, source, node_range, and a resolver.
+
+    Constructor TypeErrors include the class name starting with Python 3.10.
     """
     coordinate = Coordinate(None, 'Add', 1, 2, 1, 3)
     node_range = CodeRange(CodePosition(1, 1), CodePosition(1, 4))
@@ -31,11 +34,13 @@ def test_context_requires_source_position_with_resolver():
     assert position.node_range == node_range
     assert position.offset_resolver is resolver
     assert context.meta is None
-    with pytest.raises(TypeError, match=match("Context.__init__() missing 1 required positional argument: 'position'")):
+    context_init = 'Context.__init__' if sys.version_info >= (3, 10) else '__init__'
+    source_position_init = 'SourcePosition.__init__' if sys.version_info >= (3, 10) else '__init__'
+    with pytest.raises(TypeError, match=match(f"{context_init}() missing 1 required positional argument: 'position'")):
         Context(comment=None)  # type: ignore[call-arg]
-    with pytest.raises(TypeError, match=match("SourcePosition.__init__() missing 1 required positional argument: 'offset_resolver'")):
+    with pytest.raises(TypeError, match=match(f"{source_position_init}() missing 1 required positional argument: 'offset_resolver'")):
         SourcePosition(coordinate, '1 + 2', node_range)  # type: ignore[call-arg]
-    with pytest.raises(TypeError, match=match("SourcePosition.__init__() missing 2 required positional arguments: 'node_range' and 'offset_resolver'")):
+    with pytest.raises(TypeError, match=match(f"{source_position_init}() missing 2 required positional arguments: 'node_range' and 'offset_resolver'")):
         SourcePosition(coordinate, '1 + 2')  # type: ignore[call-arg]
 
 
