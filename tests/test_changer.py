@@ -85,7 +85,7 @@ def test_iterate_coordinates_filters_matching_add_without_calling_converter(file
 
     @changer.filter
     def filter_second_add(node: Add, context: Context) -> bool:
-        return context.coordinate.start_line == 2
+        return context.position.coordinate.start_line == 2
 
     coordinates = list(changer.iterate_coordinates())
 
