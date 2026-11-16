@@ -1,10 +1,11 @@
+from dataclasses import replace
 from typing import Dict, List, Type
 
 from libcst import CSTNode, CSTTransformer, metadata
 
+from cstvis.converter import Converter, resolve_converters
 from cstvis.dto import Context, Coordinate, SourcePosition
 from cstvis.source_offsets import SourceOffsetResolver
-from cstvis.wrapper import CallableWrapper
 
 
 class SuperTransformer(CSTTransformer):
@@ -21,11 +22,16 @@ class SuperTransformer(CSTTransformer):
     def __init__(
         self,
         target_coordinate: Coordinate,
-        nodes_mapping: Dict[Type[CSTNode], List[CallableWrapper[CSTNode]]],
+        nodes_mapping: Dict[Type[CSTNode], List[Converter]],
         comments: Dict[int, str],
         source_offsets: SourceOffsetResolver,
     ):
         self.target_coordinate = target_coordinate
+        self.target_coordinate_without_converter_id = replace(
+            target_coordinate,
+            file=None,
+            converter_id=None,
+        )
         self.nodes_mapping = nodes_mapping
         self.comments = comments
         self.source_offsets = source_offsets
@@ -34,8 +40,7 @@ class SuperTransformer(CSTTransformer):
 
     # LibCST's generic signature cannot express supported cross-type replacements.
     def on_leave(self, original_node: CSTNode, updated_node: CSTNode) -> CSTNode:  # type: ignore[override]
-        converters = self.nodes_mapping.get(type(original_node), []) + self.nodes_mapping.get(CSTNode, [])  # type: ignore[type-abstract]
-        if not converters:
+        if original_node.__class__.__name__ != self.target_coordinate.class_name:
             return updated_node
 
         position = self.get_metadata(metadata.PositionProvider, original_node)
@@ -47,22 +52,14 @@ class SuperTransformer(CSTTransformer):
             end_line=position.end.line,
             end_column=position.end.column,
         )
-        target_coordinate_without_converter_id = Coordinate(
-            file=None,
-            class_name=self.target_coordinate.class_name,
-            start_line=self.target_coordinate.start_line,
-            start_column=self.target_coordinate.start_column,
-            end_line=self.target_coordinate.end_line,
-            end_column=self.target_coordinate.end_column,
-        )
-
-        if coordinate == target_coordinate_without_converter_id:
-            for converter in converters:  # pragma: no branch
-                if converter.get_function_id() == self.target_coordinate.converter_id:
+        if coordinate == self.target_coordinate_without_converter_id:
+            converter_ids = resolve_converters(self.nodes_mapping, type(original_node))
+            for converter, converter_id in converter_ids.items():  # pragma: no branch
+                if converter_id == self.target_coordinate.converter_id:
                     node_range = self.get_metadata(metadata.WhitespaceInclusivePositionProvider, original_node)
                     context = Context(
                         SourcePosition(coordinate, self.source_offsets.source, node_range, self.source_offsets),
                         self.comments.get(coordinate.start_line),
                     )
-                    return converter(updated_node, context)
+                    return converter.call_with_context(updated_node, context)
         return updated_node

@@ -7,6 +7,7 @@ from typing import (
     Generator,
     List,
     Optional,
+    Tuple,
     Type,
     Union,
 )
@@ -14,8 +15,9 @@ from typing import (
 from libcst import CSTNode, metadata, parse_module
 
 from cstvis.collector import Collector
-from cstvis.dto import Context, Coordinate
-from cstvis.source_offsets import SourceOffsetResolver
+from cstvis.converter import Converter, ConverterFilter, ConverterFunction
+from cstvis.dto import Coordinate
+from cstvis.source_offsets import SourceOffsetResolver, restore_codegen_prefix
 from cstvis.transformers.super_transformer import SuperTransformer
 from cstvis.visitors.bloodhound import Bloodhound
 from cstvis.visitors.comments_aggregator import CommentsAggregator
@@ -27,54 +29,58 @@ class Changer:
         self.source = source
         self.module = parse_module(source)
 
-        self.converters_by_types: Dict[Type[CSTNode], List[CallableWrapper[CSTNode]]] = defaultdict(list)
+        self.converters_by_types: Dict[Type[CSTNode], List[Converter]] = defaultdict(list)
         self.filters_by_types: Dict[Type[CSTNode], List[CallableWrapper[bool]]] = defaultdict(list)
 
         if collector is not None:
             for collected_filter in collector._filters:
-                self.filter(meta=collected_filter.meta)(collected_filter.function)  # type: ignore[call-arg, arg-type]
+                self._register_filter(collected_filter)
             for collected_converter in collector._converters:
-                self.converter(meta=collected_converter.meta)(collected_converter.function)  # type: ignore[call-arg, arg-type]
+                self._register_converter(collected_converter)
+
+    @cached_property
+    def _traversal(self) -> Tuple[metadata.MetadataWrapper, SourceOffsetResolver]:
+        wrapper = metadata.MetadataWrapper(self.module)
+        node_ranges = wrapper.resolve(metadata.WhitespaceInclusivePositionProvider)
+        return wrapper, SourceOffsetResolver(wrapper.module, self.source, node_ranges.values())
 
     @cached_property
     def _comments_by_lines(self) -> Dict[int, str]:
-        wrapper = metadata.MetadataWrapper(self.module)
         aggregator = CommentsAggregator()
-        wrapper.visit(aggregator)
+        self._traversal[0].visit(aggregator)
         return aggregator.comments
 
-    def filter(self, function: Optional[Union[Callable[[CSTNode], bool], Callable[[CSTNode, Context], bool]]] = None, meta: Optional[Dict[str, Any]] = None) -> Union[Union[Callable[[CSTNode], bool], Callable[[CSTNode, Context], bool]], Callable[[Union[Callable[[CSTNode], bool], Callable[[CSTNode, Context], bool]]], Union[Callable[[CSTNode], bool], Callable[[CSTNode, Context], bool]]]]:
+    def filter(self, function: Optional[ConverterFilter] = None, meta: Optional[Dict[str, Any]] = None) -> Union[ConverterFilter, Callable[[ConverterFilter], ConverterFilter]]:
         if function is None:
             return partial(self.filter, meta=meta)  # type: ignore[return-value]
 
-        wrapper = CallableWrapper(function, meta=meta)
-
-        for annotation in wrapper.first_node_annotations:
-            self.filters_by_types[annotation].append(wrapper)
-
+        self._register_filter(CallableWrapper(function, meta=meta))
         return function
 
-    def converter(self, function: Optional[Union[Callable[[CSTNode], CSTNode], Callable[[CSTNode, Context], CSTNode]]] = None, meta: Optional[Dict[str, Any]] = None) -> Union[Union[Callable[[CSTNode], CSTNode], Callable[[CSTNode, Context], CSTNode]], Callable[[Union[Callable[[CSTNode], CSTNode], Callable[[CSTNode, Context], CSTNode]]], Union[Callable[[CSTNode], CSTNode], Callable[[CSTNode, Context], CSTNode]]]]:
+    def converter(self, function: Optional[ConverterFunction] = None, meta: Optional[Dict[str, Any]] = None) -> Union[Converter, Callable[[ConverterFunction], Converter]]:
         if function is None:
             return partial(self.converter, meta=meta)  # type: ignore[return-value]
 
-        wrapper = CallableWrapper(function, meta=meta)
+        converter = Converter(function, meta=meta)
+        self._register_converter(converter)
+        return converter
 
+    def _register_filter(self, wrapper: CallableWrapper[bool]) -> None:
         for annotation in wrapper.first_node_annotations:
-            self.converters_by_types[annotation].append(wrapper)
+            self.filters_by_types[annotation].append(wrapper)
 
-        return function
+    def _register_converter(self, converter: Converter) -> None:
+        for annotation in converter.first_node_annotations:
+            self.converters_by_types[annotation].append(converter)
 
     def iterate_coordinates(self) -> Generator[Coordinate, None, None]:
-        wrapper = metadata.MetadataWrapper(self.module)
-        node_ranges = wrapper.resolve(metadata.WhitespaceInclusivePositionProvider)
-        printer = Bloodhound(self.converters_by_types, self._comments_by_lines, self.filters_by_types, SourceOffsetResolver(wrapper.module, self.source, node_ranges.values()))
+        wrapper, source_offsets = self._traversal
+        printer = Bloodhound(self.converters_by_types, self._comments_by_lines, self.filters_by_types, source_offsets)
 
         wrapper.visit(printer)
         yield from printer.coordinates
 
     def apply_coordinate(self, coordinate: Coordinate) -> str:
-        wrapper = metadata.MetadataWrapper(self.module)
-        node_ranges = wrapper.resolve(metadata.WhitespaceInclusivePositionProvider)
-        modified = wrapper.visit(SuperTransformer(coordinate, self.converters_by_types, self._comments_by_lines, SourceOffsetResolver(wrapper.module, self.source, node_ranges.values())))
-        return modified.code
+        wrapper, source_offsets = self._traversal
+        modified = wrapper.visit(SuperTransformer(coordinate, self.converters_by_types, self._comments_by_lines, source_offsets))
+        return restore_codegen_prefix(self.source, modified.code)

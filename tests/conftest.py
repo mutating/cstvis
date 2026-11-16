@@ -8,11 +8,11 @@ def file(strings: List[str]) -> str:
     return '\n'.join(strings)
 
 
-@pytest.fixture(params=[True, False])
+@pytest.fixture(params=[True, False], ids=['context', 'node_only'])
 def with_context(request) -> bool:
     return request.param
 
 
-@pytest.fixture(params=(lambda x: x, lambda x: x()))
+@pytest.fixture(params=(lambda x: x, lambda x: x()), ids=['bare', 'called'])
 def unfold(request):
     return request.param

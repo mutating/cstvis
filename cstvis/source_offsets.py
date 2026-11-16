@@ -1,4 +1,4 @@
-from typing import Dict, Iterable, Optional, Set, Tuple
+from typing import Dict, Iterable, List, Optional, Set, Tuple
 
 from libcst import Module
 from libcst._nodes.internal import CodegenState
@@ -99,3 +99,46 @@ class SourceOffsetResolver:
             state._record_right_position(state.source_offset)
             self._offsets.update(state.right_position_offsets)
         return self._offsets[node_range.start], self._offsets[node_range.end]
+
+
+def _scan_leading_trivia(text: str) -> Tuple[int, List[Tuple[str, str]]]:
+    """Return the leading-trivia end index and comments with their indentation."""
+    comments = []
+    index = 0
+    length = len(text)
+    while index < length:
+        character = text[index]
+        if character in ' \t\f\r\n' or (character == '\ufeff' and index == 0):
+            index += 1
+        elif character == '\\' and index + 1 < length and text[index + 1] in '\r\n':
+            index += 1
+            if text[index] == '\r' and index + 1 < length and text[index + 1] == '\n':
+                index += 1
+            index += 1
+        elif character == '#':
+            start = index
+            while index < length and text[index] not in '\r\n':
+                index += 1
+            line_start = max(text.rfind('\n', 0, start), text.rfind('\r', 0, start)) + 1
+            indent = text[line_start:start].replace('\ufeff', '').replace('\f', '')
+            comments.append((indent, text[start:index]))
+        else:
+            return index, comments
+    return index, comments
+
+
+def _is_subsequence(candidate: str, source: str) -> bool:
+    iterator = iter(source)
+    return all(character in iterator for character in candidate)
+
+
+def restore_codegen_prefix(source: str, generated: str) -> str:
+    """Restore only leading source trivia that LibCST codegen omitted."""
+    source_end, source_comments = _scan_leading_trivia(source)
+    generated_end, generated_comments = _scan_leading_trivia(generated)
+    if generated_comments != source_comments:
+        return generated
+    source_prefix = '' if source_end == 0 else source[:source_end]
+    if not _is_subsequence(generated[:generated_end], source_prefix):
+        return generated
+    return source_prefix + generated[generated_end:]
