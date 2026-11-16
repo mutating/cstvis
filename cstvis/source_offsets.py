@@ -123,7 +123,7 @@ def _scan_leading_trivia(text: str) -> Tuple[int, List[Tuple[str, str]]]:
             indent = text[line_start:start].replace('\ufeff', '').replace('\f', '')
             comments.append((indent, text[start:index]))
         else:
-            break
+            return index, comments
     return index, comments
 
 
