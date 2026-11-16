@@ -27,6 +27,8 @@ It is built on top of [`libcst`](https://pypi.org/project/libcst/).
 - [**Installation**](#installation)
 - [**Changing nodes**](#changing-nodes)
 - [**Filters**](#filters)
+  - [**Node-type filters**](#node-type-filters)
+  - [**Converter-bound filters**](#converter-bound-filters)
 - [**Separating registration from execution**](#separating-registration-from-execution)
 - [**Context**](#context)
 
@@ -93,9 +95,15 @@ The key part of this example is the last two lines, where we iterate over the co
 
 ## Filters
 
-A filter is a special function registered with the `@<changer object>.filter` decorator. It returns `True` if the node should be changed and `False` otherwise. As with converters, the filter's type hint determines which nodes it is applied to.
+A filter is a predicate that controls which coordinates `iterate_coordinates()` yields: a coordinate is yielded only if every filter applicable to it returns a truthy value. Filtering happens during a single up-front discovery pass; no coordinate is yielded until that pass finishes, and `apply_coordinate()` never re-evaluates filters. A node-type filter can suppress every coordinate for a node; a converter-bound filter can suppress only that converter’s coordinate for that node.
 
-Here is another example (part of the code is omitted):
+### Node-type filters
+
+A node-type filter is registered with `@<changer object>.filter` or, when using a [collector](#separating-registration-from-execution), with `@<collector object>.filter`. As with converters, its first-argument annotation determines which node types it is evaluated for. Specifying [`libcst.CSTNode`](https://libcst.readthedocs.io/en/latest/nodes.html#libcst.CSTNode) or [`Any`](https://docs.python.org/3/library/typing.html#the-any-type), or omitting the annotation, makes the filter apply to every node matched by a converter.
+
+Node-type filters are evaluated before converter-bound filters. Each node-type filter runs at most once per node matched by a converter during a single `iterate_coordinates()` pass. If any node-type filter returns a falsy value, all coordinates for that node are suppressed; the remaining node-type filters and all converter-bound filters are skipped, and traversal continues into the node’s children.
+
+Continuing the previous example, here is a node-type filter (part of the code is omitted):
 
 ```python
 count_adds = 0
@@ -120,13 +128,60 @@ for x in changer.iterate_coordinates():
 
 As you can see, the iteration now yields only the first possible change; the rest are filtered out automatically because the filter returns `False` for them.
 
+### Converter-bound filters
+
+The `@<changer object>.converter` and `@<collector object>.converter` decorators return a `Converter`. Attach a bound filter to that object with `@<converter object>.filter`. A converter’s bound filters run in registration order. The first falsy result stops evaluating the rest of that converter’s filters and suppresses only that converter’s coordinate for the node. Calling a `Converter` directly bypasses coordinate discovery and therefore all filters.
+
+As with a node-type filter, a bound filter may take the node alone or the node and a [`Context`](#context). Unlike a node-type filter, however, a bound filter’s first-argument annotation is ignored: its converter’s annotation determines which nodes the filter receives, so it must handle every node type the converter matches.
+
+The following example has two converters for `Add` and attaches a bound filter to only one of them:
+
+```python
+from libcst import Add, Multiply, Subtract
+from cstvis import Changer
+
+changer = Changer('1 + 2 + 3')
+
+@changer.converter
+def change_add(node: Add):
+    return Subtract(
+        whitespace_before=node.whitespace_before,
+        whitespace_after=node.whitespace_after,
+    )
+
+@changer.converter
+def change_add_to_multiply(node: Add):
+    return Multiply(
+        whitespace_before=node.whitespace_before,
+        whitespace_after=node.whitespace_after,
+    )
+
+bound_calls = 0
+
+@change_add.filter
+def only_first_bound(node: Add) -> bool:
+    global bound_calls
+
+    bound_calls += 1
+
+    return bound_calls <= 1
+
+for coordinate in changer.iterate_coordinates():
+    print(changer.apply_coordinate(coordinate))
+
+#> 1 - 2 + 3
+#> 1 * 2 + 3
+#> 1 + 2 * 3
+```
+
+`only_first_bound` lets `change_add` produce a coordinate only for the first `Add` operator visited — the one inside `1 + 2`. Both converters produce a coordinate for it; for the second `Add` operator, only `change_add_to_multiply` produces one.
 
 ## Separating registration from execution
 
 In some cases, you may want to separate converter and filter registration from execution. For this purpose, a special object type — `Collector` — can help you. A collector object has the same decorators as `Changer` objects, and it can be used in the same way. When creating a `Changer`, you can pass a `Collector` instance:
 
 ```python
-from cstvis import Collector
+from cstvis import Collector, Context
 
 collector = Collector()
 
@@ -136,6 +191,11 @@ def change_add(node: Add):
         whitespace_before=node.whitespace_before,
         whitespace_after=node.whitespace_after,
     )
+
+# Bound to change_add, so it affects only that converter's coordinates.
+@change_add.filter
+def skip_commented(node: Add, context: Context) -> bool:
+    return context.comment is None
 
 changer = Changer(Path('tests/some_code/simple_sum.py').read_text(), collector=collector)
 ```
@@ -151,7 +211,7 @@ collector_2 = Collector()
 collector_3 = collector_1 + collector_2
 ```
 
-> ↑ The resulting collector will contain all the filters and converters from its components.
+> ↑ Combining collectors preserves all their filters and converters; a bound filter stays with its converter and does not become a node-type filter.
 
 ## Context
 
