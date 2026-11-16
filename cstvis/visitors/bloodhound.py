@@ -1,8 +1,9 @@
 from dataclasses import replace
-from typing import Dict, List, Type
+from typing import Dict, List, Optional, Type
 
 from libcst import CSTNode, CSTVisitor, metadata
 
+from cstvis.converter import Converter, resolve_converters
 from cstvis.dto import Context, Coordinate, SourcePosition
 from cstvis.source_offsets import SourceOffsetResolver
 from cstvis.wrapper import CallableWrapper
@@ -21,7 +22,7 @@ class Bloodhound(CSTVisitor):
 
     def __init__(
         self,
-        nodes_mapping: Dict[Type[CSTNode], List[CallableWrapper[CSTNode]]],
+        nodes_mapping: Dict[Type[CSTNode], List[Converter]],
         comments: Dict[int, str],
         filters: Dict[Type[CSTNode], List[CallableWrapper[bool]]],
         source_offsets: SourceOffsetResolver,
@@ -33,8 +34,7 @@ class Bloodhound(CSTVisitor):
         self.source_offsets = source_offsets
 
     def on_visit(self, node: CSTNode) -> bool:
-        converters = self.nodes_mapping.get(type(node), []) + self.nodes_mapping.get(CSTNode, [])  # type: ignore[type-abstract]
-        if not converters:
+        if not self.nodes_mapping.get(type(node)) and not self.nodes_mapping.get(CSTNode):  # type: ignore[type-abstract]
             return True
 
         position = self.get_metadata(metadata.PositionProvider, node)
@@ -47,17 +47,27 @@ class Bloodhound(CSTVisitor):
             end_column=position.end.column,
         )
 
-        filters = self.filters.get(type(node), []) + self.filters.get(CSTNode, [])  # type: ignore[type-abstract]
-        if filters:
-            node_range = self.get_metadata(metadata.WhitespaceInclusivePositionProvider, node)
-            context = Context(
-                SourcePosition(coordinate, self.source_offsets.source, node_range, self.source_offsets),
-                self.comments.get(coordinate.start_line),
-            )
-            for filter_function in filters:
-                if not filter_function(node, context):
-                    return True
-        for converter_id in {converter.get_function_id() for converter in converters}:
+        node_type_filters = list(dict.fromkeys(self.filters.get(type(node), []) + self.filters.get(CSTNode, [])))  # type: ignore[type-abstract]
+        context: Optional[Context] = None
+        if node_type_filters:
+            context = self._build_context(node, coordinate)
+            if not all(filter_function.call_with_context(node, context) for filter_function in node_type_filters):
+                return True
+
+        converter_ids = resolve_converters(self.nodes_mapping, type(node))
+        for converter, converter_id in converter_ids.items():
+            if converter.filters:
+                if context is None:
+                    context = self._build_context(node, coordinate)
+                if not all(filter_function.call_with_context(node, context) for filter_function in converter.filters):
+                    continue
             self.coordinates.append(replace(coordinate, converter_id=converter_id))
 
         return True
+
+    def _build_context(self, node: CSTNode, coordinate: Coordinate) -> Context:
+        node_range = self.get_metadata(metadata.WhitespaceInclusivePositionProvider, node)
+        return Context(
+            SourcePosition(coordinate, self.source_offsets.source, node_range, self.source_offsets),
+            self.comments.get(coordinate.start_line),
+        )

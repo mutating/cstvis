@@ -1,10 +1,9 @@
 from functools import partial
 from typing import Any, Callable, Dict, List, Optional, Union
 
-from libcst import CSTNode
 from printo import repred
 
-from cstvis.dto import Context
+from cstvis.converter import Converter, ConverterFilter, ConverterFunction
 from cstvis.wrapper import CallableWrapper
 
 
@@ -13,7 +12,7 @@ class Collector:
     def __init__(self, meta: Optional[Dict[str, Any]] = None) -> None:
         self._meta: Dict[str, Any] = meta if meta else {}
         self._filters: List[CallableWrapper[bool]] = []
-        self._converters: List[CallableWrapper[CSTNode]] = []
+        self._converters: List[Converter] = []
 
     def __add__(self, other: 'Collector') -> 'Collector':
         if not isinstance(other, type(self)):
@@ -28,26 +27,23 @@ class Collector:
 
         return result
 
-    def filter(self, function: Optional[Union[Callable[[CSTNode], bool], Callable[[CSTNode, Context], bool]]] = None, meta: Optional[Dict[str, Any]] = None) -> Union[Union[Callable[[CSTNode], bool], Callable[[CSTNode, Context], bool]], Callable[[Union[Callable[[CSTNode], bool], Callable[[CSTNode, Context], bool]]], Union[Callable[[CSTNode], bool], Callable[[CSTNode, Context], bool]]]]:
+    def filter(self, function: Optional[ConverterFilter] = None, meta: Optional[Dict[str, Any]] = None) -> Union[ConverterFilter, Callable[[ConverterFilter], ConverterFilter]]:
         if function is None:
             return partial(self.filter, meta=meta)  # type: ignore[return-value]
 
-        self._add_to_collection(function, meta, self._filters)
+        self._filters.append(CallableWrapper(function, meta=self._merge_meta(meta)))
         return function
 
-    def converter(self, function: Optional[Union[Callable[[CSTNode], CSTNode], Callable[[CSTNode, Context], CSTNode]]] = None, meta: Optional[Dict[str, Any]] = None) -> Union[Union[Callable[[CSTNode], CSTNode], Callable[[CSTNode, Context], CSTNode]], Callable[[Union[Callable[[CSTNode], CSTNode], Callable[[CSTNode, Context], CSTNode]]], Union[Callable[[CSTNode], CSTNode], Callable[[CSTNode, Context], CSTNode]]]]:
+    def converter(self, function: Optional[ConverterFunction] = None, meta: Optional[Dict[str, Any]] = None) -> Union[Converter, Callable[[ConverterFunction], Converter]]:
         if function is None:
             return partial(self.converter, meta=meta)  # type: ignore[return-value]
 
-        self._add_to_collection(function, meta, self._converters)
-        return function
+        converter = Converter(function, meta=self._merge_meta(meta))
+        self._converters.append(converter)
+        return converter
 
-    def _add_to_collection(self, function: Union[Callable[[CSTNode], CSTNode], Callable[[CSTNode, Context], CSTNode], Callable[[CSTNode], bool], Callable[[CSTNode, Context], bool]], meta: Optional[Dict[str, Any]], collection: Union[List[CallableWrapper[bool]], List[CallableWrapper[CSTNode]]]) -> None:
-        if meta is not None:
-            submeta = self._meta.copy()
-            submeta.update(meta)
-            meta = submeta
-        elif self._meta:
-            meta = self._meta.copy()
+    def _merge_meta(self, meta: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+        if meta is None:
+            return self._meta.copy() if self._meta else None
 
-        collection.append(CallableWrapper(function, meta=meta))  # type: ignore[arg-type]
+        return {**self._meta, **meta}
